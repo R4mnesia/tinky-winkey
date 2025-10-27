@@ -1,2 +1,4 @@
 # tinky-winkey
-Windows service (tinky) managing a SYSTEM-level keylogger (winkey) that logs keystrokes with timestamps and active process info.
+
+⚠️ This project is for educational purposes only.  
+Do not use it for monitoring or collecting data without user consent
