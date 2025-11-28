@@ -22,6 +22,6 @@
 void    install_svc(char *serviceName, char *pathExe);
 void    start_svc(void);
 void    stop_svc(void);
-void    delete_svc(void);
+void    delete_svc(char *serviceName);
 
 #endif
