@@ -2,37 +2,39 @@
 
 void    delete_svc(char *serviceName)
 {
-    SC_HANDLE       hService = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-    SC_HANDLE       schService = NULL;
+    SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     //SERVICE_STATUS  ssStatus; 
 
-    if (!hService)
+    if (!hSCM)
     {
         printf("Unable to open SCM: %lu\n", GetLastError());
         return ;
     }
 
-    schService = OpenService(
-        hService,           // SCM database
+    SC_HANDLE hService = OpenService(
+        hSCM,               // SCM database
         serviceName,
         DELETE              // need delete access
     );
-    if (!schService)
+    if (!hService)
     {
         printf("Open service failed: %lu\n", GetLastError());
-        CloseServiceHandle(hService);
+        CloseServiceHandle(hSCM);
         return ;
     }
 
-    if (!DeleteService(schService))
+    if (is_service_running(serviceName) == 0)
     {
-        printf("Delete service failed: %lu\n", GetLastError());
+        if (!DeleteService(hService))
+        {
+            printf("Delete service failed: %lu\n", GetLastError());
+        }
+        else
+            printf("Service deleted successfully\n");
     }
-    else
-        printf("Service deleted successfully\n");
-
-    CloseServiceHandle(schService);
+    
     CloseServiceHandle(hService);
+    CloseServiceHandle(hSCM);
 
     return ;
 }
