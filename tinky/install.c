@@ -5,8 +5,8 @@
 void    install_svc(char *serviceName, char *pathExe)
 {
     // handle of service control manager
-    SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
-    if (!hSCManager)
+    SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
+    if (!hSCM)
     {
         printf("Unable to open SCM: %lu\n", GetLastError());
         return ;
@@ -14,7 +14,7 @@ void    install_svc(char *serviceName, char *pathExe)
 
     // handle of specific service
     SC_HANDLE hService = CreateService(
-        hSCManager,
+        hSCM,
         serviceName,                // intern name of service
         serviceName,                // printed name
         SERVICE_ALL_ACCESS,         // all privilege
@@ -34,16 +34,14 @@ void    install_svc(char *serviceName, char *pathExe)
         else
         {
             printf("Cannot create the service: %lu\n", err_code);
-            CloseServiceHandle(hSCManager);
+            CloseServiceHandle(hSCM);
             return ;
         }
     }
     else
-    {
         printf("Service successfully installed\n");
-        CloseServiceHandle(hService);
-    }
 
-    CloseServiceHandle(hSCManager);
+    CloseServiceHandle(hService);
+    CloseServiceHandle(hSCM);
     return ;
 }

@@ -12,14 +12,15 @@ int main(int argc, char **argv)
     if (argc != 2)
         return (usage_error());
 
-    if (strcmp(argv[1], INSTALL) == 0)
-        install_svc("hello_world", "service_hello.exe");
+    if (strcmp(argv[1], INSTALL) == 0) {
+        install_svc("TEST", "Z:\\test.exe");
+    }
     else if (strcmp(argv[1], START) == 0)
-        start_svc();
+        start_svc("TEST");
     else if (strcmp(argv[1], STOP) == 0)
-        stop_svc();
+        stop_svc("TEST");
     else if (strcmp(argv[1], DEL) == 0)
-        delete_svc();
+        delete_svc("TEST");
     else
         return (usage_error());
     return (0);
