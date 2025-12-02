@@ -8,20 +8,29 @@ int usage_error(void)
 
 int main(int argc, char **argv)
 {
-    (void)argv;
-    if (argc != 2)
-        return (usage_error());
-
-    if (strcmp(argv[1], INSTALL) == 0) {
-        install_svc("TEST", "Z:\\test.exe");
+    if (argc == 2)
+    {
+        if (strcmp(argv[1], INSTALL) == 0)
+            install_svc(SERVICE_NAME, argv[0]);
+        else if (strcmp(argv[1], START) == 0)
+            start_svc(SERVICE_NAME);
+        else if (strcmp(argv[1], STOP) == 0)
+            stop_svc(SERVICE_NAME);
+        else if (strcmp(argv[1], DEL) == 0)
+            delete_svc(SERVICE_NAME);
+        else
+            return (usage_error());
+        return (0);
     }
-    else if (strcmp(argv[1], START) == 0)
-        start_svc("TEST");
-    else if (strcmp(argv[1], STOP) == 0)
-        stop_svc("TEST");
-    else if (strcmp(argv[1], DEL) == 0)
-        delete_svc("TEST");
-    else
-        return (usage_error());
+
+    // service mode
+    SERVICE_TABLE_ENTRY table[] = {
+        { SERVICE_NAME, (LPSERVICE_MAIN_FUNCTION)ServiceMain },
+        { NULL, NULL }
+    };
+
+    // this function connect executable to the Service Control Manager SCM
+    StartServiceCtrlDispatcher(table);
+
     return (0);
 }

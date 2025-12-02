@@ -51,4 +51,7 @@ void    delete_svc(char *serviceName);
 // utils.c
 int     is_service_running(char *serviceName);
 
+// svc.c
+void WINAPI ServiceMain(DWORD argc, LPTSTR *argv);
+
 #endif
