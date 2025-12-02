@@ -7,7 +7,7 @@
 
 
 /* 
-    minimal version for compilator 
+    minimal version facor compilator 
     0x0A00 -> windows 10
 */
 #define _WIN32_WINNT 0x0A00
@@ -23,6 +23,18 @@
 #define START   "start"
 #define STOP    "stop"
 #define DEL     "delete"
+
+#define SERVICE_NAME "tinky"
+
+typedef struct s_svc_ctx
+{
+    SERVICE_STATUS status;              // struct windows state of service
+    SERVICE_STATUS_HANDLE hStatus;      // handle id status
+
+    PROCESS_INFORMATION winkey_proc;    // handle process winkey
+    HANDLE hStopEvent;                  // event for stop signal
+} t_svc_ctx;
+
 
 // install.c
 void    install_svc(char *serviceName, char *pathExe);
