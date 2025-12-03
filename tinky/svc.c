@@ -24,8 +24,10 @@ DWORD WINAPI ServiceCtrlHandlerEx(DWORD ctrl, DWORD eventType, LPVOID eventData,
     if (ctrl == SERVICE_CONTROL_STOP)
     {
         ctx->status.dwCurrentState = SERVICE_STOP_PENDING;
-        SetServiceStatus(ctx->hStatus, &ctx->status);
-        SetEvent(ctx->hStopEvent); // sig stop
+        if (!SetServiceStatus(ctx->hStatus, &ctx->status))
+            printf("Set service status failed: %lu", GetLastError());
+        if (!SetEvent(ctx->hStopEvent)) // sig stop
+            printf("Set event failed: %lu" GetLastError());
     }
     return (0);
 }
@@ -46,12 +48,18 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
         ServiceCtrlHandlerEx,
         &ctx
     );
+    if (!ctx.hStatus)
+    {
+        printf("Register Service handler failed: %lu\n", GetLastError());
+        return ;
+    }
 
     ctx.status.dwControlsAccepted = SERVICE_ACCEPT_STOP;
     ctx.status.dwCurrentState = SERVICE_RUNNING;
 
     // notifies the SCM of the current status of service
-    SetServiceStatus(ctx.hStatus, &ctx.status);
+    if (!SetServiceStatus(ctx.hStatus, &ctx.status))
+        printf("Set service status failed: %lu", GetLastError());
 
 
     // function for start programme winkey
