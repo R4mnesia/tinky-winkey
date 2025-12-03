@@ -8,6 +8,7 @@ SRCS_MANAGER = tinky/delete.c \
 				tinky/start.c \
 				tinky/stop.c \
 				tinky/utils.c \
+				tinky/svc.c \
 				tinky/main.c
 
 
