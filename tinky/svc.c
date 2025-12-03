@@ -65,6 +65,50 @@ static DWORD   GetWinLogonPid(DWORD sessionID)
     return (pid);
 }
 
+HANDLE  GetSystemToken(void)
+{
+    DWORD   sessionID = WTSGetActiveConsoleSessionId(); // session 0
+    DWORD   pid = GetWinLogonPid(sessionID);    
+    
+    HANDLE hProcess = OpenProcess(
+        PROCESS_QUERY_INFORMATION, 
+        FALSE, 
+        pid);
+
+    if (!hProcess)
+    {
+        printf("OpenProcess failed: %lu\n", GetLastError());
+        return (NULL);
+    }
+
+    // open token winlogon
+    HANDLE hToken = NULL;
+    if (!OpenProcessToken(
+        hProcess, 
+        TOKEN_DUPLICATE | TOKEN_QUERY, 
+        &hToken))
+    {
+        printf("OpenProcessToken failed: %lu\n", GetLastError());
+        return (NULL);
+    }
+
+    HANDLE hNewToken = NULL;
+    if (!DuplicateTokenEx(
+        hToken,
+        TOKEN_ALL_ACCESS,
+        NULL,
+        SecurityImpersonation,
+        TokenPrimary,
+        &hNewToken
+    ))
+    {
+        printf("DuplicateTokenEx failed: %lu\n", GetLastError());
+        return (NULL);
+    }
+    
+    return (hNewToken);
+}
+
 // session 0 -> not interactive
 // session 1 -> interactive
 // start service SYSTEM privilege (session 0)
@@ -99,45 +143,10 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     
     // duplicate SYSTEM token (session 1)
     
-    DWORD   sessionID = WTSGetActiveConsoleSessionId(); // session 0
-    DWORD   pid = GetWinLogonPid(sessionID);    
+    HANDLE  hToken = GetSystemToken();
+
+    UNREFERENCED_PARAMETER(hToken);
     
-    HANDLE hProcess = OpenProcess(
-        PROCESS_QUERY_INFORMATION, 
-        FALSE, 
-        pid);
-
-    if (!hProcess)
-    {
-        printf("OpenProcess failed: %lu\n", GetLastError());
-        return ;
-    }
-
-    // open token winlogon
-    HANDLE hToken = NULL;
-    if (!OpenProcessToken(
-        hProcess, 
-        TOKEN_DUPLICATE | TOKEN_QUERY, 
-        &hToken))
-    {
-        printf("OpenProcessToken failed: %lu\n", GetLastError());
-        return ;
-    }
-
-    HANDLE hNewToken = NULL;
-    if (!DuplicateTokenEx(
-        hToken,
-        TOKEN_ALL_ACCESS,
-        NULL,
-        SecurityImpersonation,
-        TokenPrimary,
-        &hNewToken
-    ))
-    {
-        printf("DuplicateTokenEx failed: %lu\n", GetLastError());
-        return ;
-    }
-
     // for test
     /*STARTUPINFO si = { sizeof(si) };
     PROCESS_INFORMATION pi;
