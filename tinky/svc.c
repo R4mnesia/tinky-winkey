@@ -14,7 +14,7 @@ typedef struct _SERVICE_STATUS {
 
 */
 
-DWORD WINAPI ServiceCtrlHandlerEx(DWORD ctrl, DWORD eventType, LPVOID eventData, LPVOID context)
+static DWORD WINAPI ServiceCtrlHandlerEx(DWORD ctrl, DWORD eventType, LPVOID eventData, LPVOID context)
 {
     UNREFERENCED_PARAMETER(eventType);
     UNREFERENCED_PARAMETER(eventData);
@@ -27,11 +27,47 @@ DWORD WINAPI ServiceCtrlHandlerEx(DWORD ctrl, DWORD eventType, LPVOID eventData,
         if (!SetServiceStatus(ctx->hStatus, &ctx->status))
             printf("Set service status failed: %lu", GetLastError());
         if (!SetEvent(ctx->hStopEvent)) // sig stop
-            printf("Set event failed: %lu" GetLastError());
+            printf("Set event failed: %lu", GetLastError());
     }
     return (0);
 }
 
+static DWORD   GetWinLogonPid(DWORD sessionID)
+{
+    UNREFERENCED_PARAMETER(sessionID);
+
+
+    DWORD pid = 0;
+    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnap == INVALID_HANDLE_VALUE)
+        return (0);
+
+    PROCESSENTRY32 pe;
+    pe.dwSize = sizeof(PROCESSENTRY32);
+
+    // get first process on snapshot
+    if (Process32First(hSnap, &pe))
+    {
+        while (TRUE)
+        {
+            // check winlogon process
+            if (_stricmp(pe.szExeFile, "winlogon.exe") == 0)
+            {
+                pid = pe.th32ProcessID;
+                break ;
+            }
+            if (!Process32Next(hSnap, &pe)) // check next process
+                break ;
+        }
+    }
+
+    CloseHandle(hSnap);
+    return (pid);
+}
+
+// session 0 -> not interactive
+// session 1 -> interactive
+// start service SYSTEM privilege (session 0)
 void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
 {
     UNREFERENCED_PARAMETER(argc);
@@ -60,7 +96,69 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     // notifies the SCM of the current status of service
     if (!SetServiceStatus(ctx.hStatus, &ctx.status))
         printf("Set service status failed: %lu", GetLastError());
+    
+    // duplicate SYSTEM token (session 1)
+    
+    DWORD   sessionID = WTSGetActiveConsoleSessionId(); // session 0
+    DWORD   pid = GetWinLogonPid(sessionID);    
+    
+    HANDLE hProcess = OpenProcess(
+        PROCESS_QUERY_INFORMATION, 
+        FALSE, 
+        pid);
 
+    if (!hProcess)
+    {
+        printf("OpenProcess failed: %lu\n", GetLastError());
+        return ;
+    }
+
+    // open token winlogon
+    HANDLE hToken = NULL;
+    if (!OpenProcessToken(
+        hProcess, 
+        TOKEN_DUPLICATE | TOKEN_QUERY, 
+        &hToken))
+    {
+        printf("OpenProcessToken failed: %lu\n", GetLastError());
+        return ;
+    }
+
+    HANDLE hNewToken = NULL;
+    if (!DuplicateTokenEx(
+        hToken,
+        TOKEN_ALL_ACCESS,
+        NULL,
+        SecurityImpersonation,
+        TokenPrimary,
+        &hNewToken
+    ))
+    {
+        printf("DuplicateTokenEx failed: %lu\n", GetLastError());
+        return ;
+    }
+
+    // for test
+    /*STARTUPINFO si = { sizeof(si) };
+    PROCESS_INFORMATION pi;
+
+    if (CreateProcessAsUser(
+            hNewToken,
+            "C:\\Windows\\System32\\notepad.exe",
+            NULL,
+            NULL,
+            NULL,
+            FALSE,
+            0,
+            NULL,
+            NULL,
+            &si,
+            &pi))
+    {
+        printf("Process created!\n");
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }*/
 
     // function for start programme winkey
 }
