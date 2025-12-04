@@ -55,3 +55,93 @@ int     is_service_running(char *serviceName)
         return (1);
     return (0);
 }
+
+void    getFilePathFromExe(char *output, char *filename)
+{
+    char exePath[MAX_PATH];
+    GetModuleFileNameA(NULL, exePath, MAX_PATH);
+
+    int len = (int)strlen(exePath);
+    while (len > 0 && exePath[len - 1] != '\\')
+        len--;
+    exePath[len] = '\0';
+
+    snprintf(output, MAX_PATH, "%s%s", exePath, filename);
+}
+
+DWORD   GetWinLogonPid(DWORD sessionID)
+{
+    UNREFERENCED_PARAMETER(sessionID);
+
+
+    DWORD pid = 0;
+    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnap == INVALID_HANDLE_VALUE)
+        return (0);
+
+    PROCESSENTRY32 pe;
+    pe.dwSize = sizeof(PROCESSENTRY32);
+
+    // get first process on snapshot
+    if (Process32First(hSnap, &pe))
+    {
+        while (TRUE)
+        {
+            // check winlogon process
+            if (_stricmp(pe.szExeFile, "winlogon.exe") == 0)
+            {
+                pid = pe.th32ProcessID;
+                break ;
+            }
+            if (!Process32Next(hSnap, &pe)) // check next process
+                break ;
+        }
+    }
+
+    CloseHandle(hSnap);
+    return (pid);
+}
+
+HANDLE  GetSystemToken(void)
+{
+    DWORD   sessionID = WTSGetActiveConsoleSessionId(); // session 0
+    DWORD   pid = GetWinLogonPid(sessionID);    
+    
+    HANDLE hProcess = OpenProcess(
+        PROCESS_QUERY_INFORMATION, 
+        FALSE, 
+        pid);
+
+    if (!hProcess)
+    {
+        printf("OpenProcess failed: %lu\n", GetLastError());
+        return (NULL);
+    }
+
+    // open token winlogon
+    HANDLE hToken = NULL;
+    if (!OpenProcessToken(
+        hProcess, 
+        TOKEN_DUPLICATE | TOKEN_QUERY, 
+        &hToken))
+    {
+        printf("OpenProcessToken failed: %lu\n", GetLastError());
+        return (NULL);
+    }
+
+    HANDLE hNewToken = NULL;
+    if (!DuplicateTokenEx(
+        hToken,
+        TOKEN_ALL_ACCESS,
+        NULL,
+        SecurityImpersonation,
+        TokenPrimary,
+        &hNewToken
+    ))
+    {
+        printf("DuplicateTokenEx failed: %lu\n", GetLastError());
+        return (NULL);
+    }
+    
+    return (hNewToken);
+}

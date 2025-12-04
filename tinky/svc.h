@@ -18,6 +18,7 @@
 #define _WIN32_WINNT_WIN10_RS4  0x0A03
 #define _WIN32_WINNT_WIN10_RS5  0x0A04
 #include <windows.h>
+#include <tlhelp32.h>
 
 #define INSTALL "install"
 #define START   "start"
@@ -50,6 +51,9 @@ void    delete_svc(char *serviceName);
 
 // utils.c
 int     is_service_running(char *serviceName);
+void    getFilePathFromExe(char *output, char *filename);
+DWORD   GetWinLogonPid(DWORD sessionID);
+HANDLE  GetSystemToken(void);
 
 // svc.c
 void WINAPI ServiceMain(DWORD argc, LPTSTR *argv);

