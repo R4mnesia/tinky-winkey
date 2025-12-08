@@ -11,8 +11,9 @@ SRCS_MANAGER = tinky/delete.c \
 				tinky/svc.c \
 				tinky/main.c
 
-SRCS_WINKEY = winkey/winkey.c
-
+SRCS_WINKEY = winkey/winkey.c \
+			  winkey/logs_utils.c
+			  
 all: $(MANAGER) $(SERVICE)
 
 $(MANAGER): $(SRCS_MANAGER)
