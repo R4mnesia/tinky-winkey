@@ -49,3 +49,16 @@ char    *GetActiveWindowTitle(void)
 
     return (title);
 }
+
+char    *FormatLogTime(void)
+{
+    char    *time = GetMyLocalTime();
+    char    *windowTitle = GetActiveWindowTitle();
+
+    size_t  size = strlen((const char *)time) + strlen((const char *)windowTitle) + 6;
+    char    *log = malloc(size + 1);
+    
+    snprintf(log, size + 1, "%s - '%s'\n", time, windowTitle);
+
+    return (log);
+}

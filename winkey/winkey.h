@@ -21,5 +21,7 @@
 // logs_utils.c
 char    *GetMyLocalTime(void);
 char    *GetActiveWindowTitle(void);
+char    *FormatLogTime(void);
+
 
 #endif
