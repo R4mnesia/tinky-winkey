@@ -35,7 +35,7 @@ void    stop_svc(char *serviceName)
         return ;
     }
 
-    if (is_service_running(serviceName))
+    if (is_service_running(serviceName) == 1)
     {
         /*
             SERVICE_STATUS_PROCESS -> struct to store state of service
@@ -43,7 +43,6 @@ void    stop_svc(char *serviceName)
         */
         SERVICE_STATUS_PROCESS ssp; 
         DWORD bytesNeeded;
-
         if (ControlService(hService, SERVICE_CONTROL_STOP, (LPSERVICE_STATUS)&ssp))
         {
             // waiting service
@@ -60,6 +59,7 @@ void    stop_svc(char *serviceName)
                 );
 
             */
+            printf("HOOOOOOOOO\n");
 
             while (QueryServiceStatusEx(
                     hService,
@@ -76,11 +76,13 @@ void    stop_svc(char *serviceName)
                 Sleep(500);
             }
         }
-        else
+        else {
             printf("Failed to stop service: %lu\n", GetLastError());
+        }
     }
-    else
+    else 
         printf("Service is not running\n");
 
+    printf("Exit function\n");
     return ;
 }
