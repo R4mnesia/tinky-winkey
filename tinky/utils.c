@@ -14,7 +14,7 @@
     } SERVICE_STATUS_PROCESS, *LPSERVICE_STATUS_PROCESS;
 */
 
-int     is_service_running(char *serviceName)
+int     is_service_running(void)
 {
     SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
     if (!hSCM)
@@ -23,7 +23,7 @@ int     is_service_running(char *serviceName)
         return (-1);
     }
 
-    SC_HANDLE hService = OpenService(hSCM, serviceName, SERVICE_QUERY_STATUS);
+    SC_HANDLE hService = OpenService(hSCM, SERVICE_NAME, SERVICE_QUERY_STATUS);
     if (!hService)
     {
         printf("Open service failed: %lu\n", GetLastError());

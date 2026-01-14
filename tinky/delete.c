@@ -1,6 +1,6 @@
 #include "svc.h"
 
-void    delete_svc(char *serviceName)
+void    delete_svc(void)
 {
     SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     //SERVICE_STATUS  ssStatus; 
@@ -13,7 +13,7 @@ void    delete_svc(char *serviceName)
 
     SC_HANDLE hService = OpenService(
         hSCM,               // SCM database
-        serviceName,
+        SERVICE_NAME,
         DELETE              // need delete access
     );
     if (!hService)
@@ -23,7 +23,7 @@ void    delete_svc(char *serviceName)
         return ;
     }
 
-    if (is_service_running(serviceName) == 0)
+    if (is_service_running() == 0)
     {
         if (!DeleteService(hService))
         {
