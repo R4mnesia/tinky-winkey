@@ -12,7 +12,8 @@ SRCS_MANAGER = tinky/delete.c \
 				tinky/main.c
 
 SRCS_WINKEY = winkey/winkey.c \
-			  winkey/logs_utils.c
+			  winkey/logs_utils.c \
+			  winkey/logs.c
 			  
 all: $(MANAGER) $(SERVICE)
 
@@ -26,7 +27,9 @@ manager: $(MANAGER)
 
 service: $(SERVICE)
 
-clean:
+clean: 
 	del *.obj
+
+fclean: clean
 	del $(MANAGER)
 	del $(SERVICE)
