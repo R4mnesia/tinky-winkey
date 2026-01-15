@@ -86,7 +86,7 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     UNREFERENCED_PARAMETER(hToken);
 
     // function for start programme winkey
-    LPWSTR    exePath = L"C:\\Users\\larri\\Desktop\\tinky-winkey\\winkey.exe"; // MAX_PATH per default == 260
+    LPWSTR    exePath = L"C:\\Users\\larri\\Desktop\\tinky-winkey"; // MAX_PATH per default == 260
     //getFilePathFromExe(exePath, "winkey.exe");
 
     STARTUPINFOW        si;
@@ -96,21 +96,13 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     ZeroMemory(&pi, sizeof(pi));
     si.cb = sizeof(si);
 
-    if (!CreateProcessWithTokenW(
-            hToken,
-            LOGON_WITH_PROFILE,
-            exePath,
-            NULL,
-            CREATE_NEW_CONSOLE,
-            NULL,
-            NULL,
-            &si,
-            &pi))
+    if (!CreateProcessAsUserW(hToken, NULL, L"winkey.exe", NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, exePath, &si, &pi))
     {
         DBG("CreateProcessWithTokenW failed: %lu\n", GetLastError());
         CloseHandle(hToken);
         return;
     }
+
     DBG("%p", (int*)hToken);
     WaitForSingleObject(ctx.hStopEvent, INFINITE);
     
