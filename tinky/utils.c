@@ -1,4 +1,5 @@
 #include "svc.h"
+#include <winnt.h>
 
 /*
     typedef struct _SERVICE_STATUS_PROCESS {
@@ -108,40 +109,51 @@ HANDLE  GetSystemToken(void)
     DWORD   pid = GetWinLogonPid(sessionID);    
     
     HANDLE hProcess = OpenProcess(
-        PROCESS_QUERY_INFORMATION, 
+        PROCESS_ALL_ACCESS, 
         FALSE, 
         pid);
 
     if (!hProcess)
     {
-        printf("OpenProcess failed: %lu\n", GetLastError());
-        return (NULL);
+        DBG("OpenProcess failed: %lu\n", GetLastError());
+        return 0;
     }
 
     // open token winlogon
     HANDLE hToken = NULL;
     if (!OpenProcessToken(
         hProcess, 
-        TOKEN_DUPLICATE | TOKEN_QUERY, 
+        TOKEN_ALL_ACCESS, 
         &hToken))
     {
-        printf("OpenProcessToken failed: %lu\n", GetLastError());
-        return (NULL);
+        DBG("OpenProcessToken failed: %lu\n", GetLastError());
+        CloseHandle(hProcess);
+        CloseHandle(hToken);
+        return 0;
     }
 
-    HANDLE hNewToken = NULL;
     if (!DuplicateTokenEx(
         hToken,
         TOKEN_ALL_ACCESS,
         NULL,
         SecurityImpersonation,
         TokenPrimary,
-        &hNewToken
+        &hToken
     ))
     {
-        printf("DuplicateTokenEx failed: %lu\n", GetLastError());
-        return (NULL);
+        DBG("DuplicateTokenEx failed: %lu\n", GetLastError());
+        CloseHandle(hProcess);
+        CloseHandle(hToken);
+        return 0;
+    }
+
+    if (!ImpersonateLoggedOnUser(hToken))
+    {
+        DBG("ImpersonateLoggedOnUser failed: %lu\n", GetLastError());
+        CloseHandle(hProcess);
+        CloseHandle(hToken);
+        return 0;
     }
     
-    return (hNewToken);
+    return (hToken);
 }

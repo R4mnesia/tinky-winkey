@@ -1,4 +1,5 @@
 #include "winkey.h"
+#include <debugapi.h>
 // add this line or add user32.lib on Makefile
 //#pragma comment(lib, "user32.lib")
 
@@ -67,7 +68,7 @@ int main(void)
 
     if (!hhook)
         printf("Hook wasn't installed\n");
-    printf("Hook was installed\n");
+    OutputDebugString("Hook was installed\n");
 
     MSG msg;
     while(GetMessage(&msg, NULL, 0, 0) != 0)

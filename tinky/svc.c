@@ -20,12 +20,19 @@ static DWORD WINAPI ServiceCtrlHandlerEx(DWORD ctrl, DWORD eventType, LPVOID eve
     UNREFERENCED_PARAMETER(eventData);
     
     t_svc_ctx *ctx = (t_svc_ctx*)context;
+    if (!ctx)
+        return (0);
 
     if (ctrl == SERVICE_CONTROL_STOP)
     {
+        if (ctx->status.dwCurrentState != SERVICE_RUNNING)
+            return (0);
         ctx->status.dwCurrentState = SERVICE_STOP_PENDING;
+        ctx->status.dwWaitHint = 3000; // estimate time for a pending start
+        ctx->status.dwControlsAccepted = 1;
         if (!SetServiceStatus(ctx->hStatus, &ctx->status))
             printf("Set service status failed: %lu", GetLastError());
+
         if (!SetEvent(ctx->hStopEvent)) // sig stop
             printf("Set event failed: %lu", GetLastError());
     }
@@ -43,6 +50,14 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     t_svc_ctx   ctx;
     ZeroMemory(&ctx, sizeof(ctx));
 
+    
+    ctx.hStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (!ctx.hStopEvent)
+    {
+        printf("CreateEvent failed: %lu\n", GetLastError());
+        return;
+    }
+
     ctx.status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
     ctx.status.dwCurrentState = SERVICE_START_PENDING;
 
@@ -57,7 +72,7 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
         return ;
     }
 
-    ctx.status.dwControlsAccepted = SERVICE_ACCEPT_STOP;
+    ctx.status.dwControlsAccepted = SERVICE_ACCEPT_PAUSE_CONTINUE | SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
     ctx.status.dwCurrentState = SERVICE_RUNNING;
 
     // notifies the SCM of the current status of service
@@ -71,7 +86,7 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     UNREFERENCED_PARAMETER(hToken);
 
     // function for start programme winkey
-    LPWSTR    exePath = L"C:\\Users\\r4mnesia\\Desktop\\Tinky\\winkey.exe"; // MAX_PATH per default == 260
+    LPWSTR    exePath = L"C:\\Users\\larri\\Desktop\\tinky-winkey\\winkey.exe"; // MAX_PATH per default == 260
     //getFilePathFromExe(exePath, "winkey.exe");
 
     STARTUPINFOW        si;
@@ -92,10 +107,15 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
             &si,
             &pi))
     {
-        printf("CreateProcessWithTokenW failed: %lu\n", GetLastError());
+        DBG("CreateProcessWithTokenW failed: %lu\n", GetLastError());
         CloseHandle(hToken);
         return;
     }
+    DBG("%p", (int*)hToken);
+    WaitForSingleObject(ctx.hStopEvent, INFINITE);
+    
+    ctx.status.dwCurrentState = SERVICE_STOPPED;
+    SetServiceStatus(ctx.hStatus, &ctx.status);
 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);

