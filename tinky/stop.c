@@ -16,6 +16,8 @@
 
 void    stop_svc(char *serviceName)
 {
+    KillWinkeyPID();
+    
     SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (!hSCM)
     {

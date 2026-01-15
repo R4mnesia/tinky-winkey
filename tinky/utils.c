@@ -69,7 +69,7 @@ void    getFilePathFromExe(char *output, char *filename)
     snprintf(output, MAX_PATH, "%s%s", exePath, filename);
 }
 
-DWORD   GetWinLogonPid(DWORD sessionID)
+DWORD   GetProcessPid(char *ProcName, DWORD sessionID)
 {
     UNREFERENCED_PARAMETER(sessionID);
 
@@ -88,7 +88,7 @@ DWORD   GetWinLogonPid(DWORD sessionID)
         while (TRUE)
         {
             // check winlogon process
-            if (_stricmp(pe.szExeFile, "winlogon.exe") == 0)
+            if (_stricmp(pe.szExeFile, ProcName) == 0)
             {
                 pid = pe.th32ProcessID;
                 break ;
@@ -102,10 +102,26 @@ DWORD   GetWinLogonPid(DWORD sessionID)
     return (pid);
 }
 
+void    KillWinkeyPID(void)
+{
+    DWORD   sessionID = WTSGetActiveConsoleSessionId();
+    DWORD   pid = GetProcessPid("winkey.exe", sessionID);
+
+    HANDLE hProcess = OpenProcess (
+        PROCESS_TERMINATE,
+        FALSE,
+        pid
+    );
+
+    if (!TerminateProcess(hProcess, pid)) {
+        printf("Error TerminateProcess: %lu\n", GetLastError());
+    }
+}
+
 HANDLE  GetSystemToken(void)
 {
     DWORD   sessionID = WTSGetActiveConsoleSessionId(); // session 0
-    DWORD   pid = GetWinLogonPid(sessionID);    
+    DWORD   pid = GetProcessPid("winlogon.exe", sessionID);    
     
     HANDLE hProcess = OpenProcess(
         PROCESS_QUERY_INFORMATION, 
