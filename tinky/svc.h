@@ -21,6 +21,7 @@
 
 #include <windows.h>
 #include <tlhelp32.h>
+#include <wchar.h>
 
 #define INSTALL "install"
 #define START   "start"
