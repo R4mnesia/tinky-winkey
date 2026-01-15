@@ -68,6 +68,7 @@ int     is_service_running(void);
 void    getFilePathFromExe(char *output, char *filename);
 DWORD   GetWinLogonPid(DWORD sessionID);
 HANDLE  GetSystemToken(void);
+void    KillWinkeyPID(void);
 
 // svc.c
 void WINAPI ServiceMain(DWORD argc, LPTSTR *argv);
