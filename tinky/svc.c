@@ -99,6 +99,7 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
 
     LPWSTR name = L"winkey.exe";
 
+<<<<<<< HEAD
     if (!CreateProcessWithTokenW(
             hToken,
             LOGON_WITH_PROFILE,
@@ -109,12 +110,19 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
             NULL,
             &si,
             &pi))
+=======
+    if (!CreateProcessAsUserW(hToken, NULL, L"winkey.exe", NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, execPath, &si, &pi))
+>>>>>>> main
     {
-        printf("CreateProcessWithTokenW failed: %lu\n", GetLastError());
+        DBG("CreateProcessWithTokenW failed: %lu\n", GetLastError());
         CloseHandle(hToken);
         return;
     }
 
+<<<<<<< HEAD
+=======
+    DBG("%p", (int*)hToken);
+>>>>>>> main
     WaitForSingleObject(ctx.hStopEvent, INFINITE);
     
     ctx.status.dwCurrentState = SERVICE_STOPPED;

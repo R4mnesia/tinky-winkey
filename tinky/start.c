@@ -1,6 +1,6 @@
 #include "svc.h"
 
-void    start_svc(char *serviceName)
+void    start_svc(void)
 {
     SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (!hSCM)
@@ -11,7 +11,7 @@ void    start_svc(char *serviceName)
 
     SC_HANDLE hService = OpenService(
         hSCM,
-        serviceName,
+        SERVICE_NAME,
         SERVICE_START
     );
     if (!hService)

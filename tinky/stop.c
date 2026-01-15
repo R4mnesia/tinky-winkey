@@ -14,10 +14,13 @@
     } SERVICE_STATUS_PROCESS, *LPSERVICE_STATUS_PROCESS;
 */
 
-void    stop_svc(char *serviceName)
+void    stop_svc(void)
 {
     KillWinkeyPID();
+<<<<<<< HEAD
     
+=======
+>>>>>>> main
     SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (!hSCM)
     {
@@ -27,7 +30,7 @@ void    stop_svc(char *serviceName)
 
     SC_HANDLE hService = OpenService(
         hSCM,
-        serviceName,
+        SERVICE_NAME,
         SERVICE_STOP | SERVICE_QUERY_STATUS
     );
     if (!hService)

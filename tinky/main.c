@@ -11,13 +11,13 @@ int main(int argc, char **argv)
     if (argc == 2)
     {
         if (strcmp(argv[1], INSTALL) == 0)
-            install_svc(SERVICE_NAME, argv[0]);
+            install_svc(argv[0]);
         else if (strcmp(argv[1], START) == 0)
-            start_svc(SERVICE_NAME);
+            start_svc();
         else if (strcmp(argv[1], STOP) == 0)
-            stop_svc(SERVICE_NAME);
+            stop_svc();
         else if (strcmp(argv[1], DEL) == 0)
-            delete_svc(SERVICE_NAME);
+            delete_svc();
         else
             return (usage_error());
         return (0);
