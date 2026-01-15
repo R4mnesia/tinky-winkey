@@ -18,6 +18,19 @@
 #define _WIN32_WINNT_WIN10_RS4  0x0A03
 #define _WIN32_WINNT_WIN10_RS5  0x0A04
 
+
+#define DBG(fmt, ...)                                      \
+do {                                                       \
+    char _buf[512];                                       \
+    _snprintf_s(                                          \
+        _buf,                                             \
+        sizeof(_buf),                                     \
+        _TRUNCATE,                                        \
+        fmt,                                              \
+        ##__VA_ARGS__);                                   \
+    OutputDebugStringA(_buf);                              \
+} while (0)
+
 // logs_utils.c
 char    *GetMyLocalTime(void);
 char    *GetActiveWindowTitle(void);

