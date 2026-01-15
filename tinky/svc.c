@@ -86,7 +86,7 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     //UNREFERENCED_PARAMETER(hToken);
 
     // function for start programme winkey
-    LPWSTR    exePath = L"C:\\Users\\r4mnesia\\Desktop\\Tinky\\winkey.exe"; // MAX_PATH per default == 260
+    LPCWSTR    exePath = L"C:\\Users\\r4mnesia\\Desktop\\tinky-winkey\\"; // MAX_PATH per default == 260
     //getFilePathFromExe(exePath, "winkey.exe");
 
     STARTUPINFOW        si;
@@ -95,12 +95,15 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     ZeroMemory(&si, sizeof(si));
     ZeroMemory(&pi, sizeof(pi));
     si.cb = sizeof(si);
+    //si.lpDesktop = L"winsta0\\default";
+
+    LPWSTR name = L"winkey.exe";
 
     if (!CreateProcessWithTokenW(
             hToken,
             LOGON_WITH_PROFILE,
             exePath,
-            NULL,
+            name,
             CREATE_NEW_CONSOLE,
             NULL,
             NULL,

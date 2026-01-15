@@ -142,6 +142,14 @@ HANDLE  GetSystemToken(void)
         printf("DuplicateTokenEx failed: %lu\n", GetLastError());
         return (NULL);
     }
+    //sessionID = 1;
+//
+    //SetTokenInformation(
+    //    hPrimary,
+    //    TokenSessionId,
+    //    &sessionID,
+    //    sizeof(sessionID)
+    //);
     
     return (hNewToken);
 }
