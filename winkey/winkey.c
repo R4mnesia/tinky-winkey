@@ -98,8 +98,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                             win_foreground,
                             0, 0,
                             WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
-	if (hook == NULL)
-		return 1;
+	if (!hook)
+		return ERROR_HOOK_NOT_INSTALLED;
 
     HHOOK hhook = SetWindowsHookExW(
                             WH_KEYBOARD_LL,
@@ -108,7 +108,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                             0);
 
     if (!hhook)
+    {
         DBG("Hook wasn't installed\n");
+        return ERROR_HOOK_NOT_INSTALLED;
+    }
     DBG("Hook was installed\n");
 
     MSG msg;
@@ -120,5 +123,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	UnhookWinEvent(hook);
 	UnhookWindowsHookEx(hhook);
-    return 0;
+    return ERROR_SUCCESS;
 }
