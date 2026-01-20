@@ -5,13 +5,19 @@ void CreateLogFile(void)
     wchar_t tempPath[MAX_PATH];
 
     GetTempPathW(MAX_PATH, tempPath);
-    wcscat_s(tempPath, MAX_PATH, L"log_tmp.txt");
-    // DBG("PATH TMP: %ls", tempPath);
+    
+    char    *file = "5B63476D485A7C0E464443";
+
+    char    *res = (char *)XorStrings(file);
+    size_t  len = strlen(file);
+    wchar_t log[12];
+    mbstowcs_s(&len, log, len, res, len);
+    wcscat_s(tempPath, MAX_PATH, log);
 
     LOG_FD = CreateFileW(
-                            tempPath,
-                            GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                            NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL
+            tempPath,
+            GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL
     );
 
     if (LOG_FD == INVALID_HANDLE_VALUE)

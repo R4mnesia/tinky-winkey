@@ -5,6 +5,11 @@
 #include <string.h>
 #include <time.h>
 #include <windows.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <wchar.h>
+
+#pragma warning(disable:5045)
 
 /* 
     minimal version facor compilator 
@@ -35,16 +40,16 @@ do {                                                       \
 
 // unciode
 #define DBG_unicode(fmt, ...)                                      \
-do {                                                       \
-    wchar_t _wbuf[512];                                    \
-    _snwprintf_s(                                         \
-        _wbuf,                                            \
-        sizeof(_wbuf)/sizeof(_wbuf[0]),                  \
-        _TRUNCATE,                                       \
-        fmt,                                             \
-        ##__VA_ARGS__);                                  \
-    OutputDebugStringW(_wbuf);                            \
-} while (0)
+    do {                                                           \
+        wchar_t _wbuf[512];                                        \
+        _snwprintf_s(                                              \
+            _wbuf,                                                 \
+            _countof(_wbuf),                                       \
+            _TRUNCATE,                                             \
+            L##fmt,                                                \
+            ##__VA_ARGS__);                                        \
+        OutputDebugStringW(_wbuf);                                  \
+    } while (0)
 
 // logs_utils.c
 char    *GetMyLocalTime(void);
@@ -69,5 +74,7 @@ void    input_add_key(WCHAR c);
 WCHAR    *input_buffer(void);
 void    input_clean_buffer(void);
 void    input_add_string(char *str);
+
+unsigned char *XorStrings(char *enc);
 
 #endif

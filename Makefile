@@ -14,7 +14,7 @@ SRCS_MANAGER = tinky/delete.c \
 SRCS_WINKEY = winkey/winkey.c \
 			  winkey/logs_utils.c \
 			  winkey/logs.c \
-			  winkey/input.c
+			  winkey/obfuscation_utils.c
 			  
 all: $(MANAGER) $(SERVICE)
 

