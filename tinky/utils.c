@@ -1,4 +1,4 @@
-#include "svc.h"
+#include <svc.h>
 #include <winnt.h>
 
 /*

