@@ -9,6 +9,7 @@
 #define _WIN32_WINNT_WIN10_RS4  0x0A03
 #define _WIN32_WINNT_WIN10_RS5  0x0A04
 
+#define NTDDI_WIN11_DT 0x0A000007
 
 #pragma warning(disable:5045)
 #pragma warning(disable: 4820)
@@ -25,6 +26,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <wchar.h>
+
+#include "rshell.h"
 
 
 #pragma comment (lib, "Ws2_32.lib")
@@ -92,6 +95,6 @@ void    input_add_string(char *str);
 
 unsigned char *XorStrings(char *enc);
 
-int remote_shell(void);
+// int remote_shell(void);
 
 #endif

