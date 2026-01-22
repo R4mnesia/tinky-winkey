@@ -79,7 +79,6 @@ int remote_shell(void)
     for (i = 0; i < MAX_CLIENTS; i++)
         clients[i] = INVALID_SOCKET;
 
-    // Receive until the peer shuts down the connection
     while(1)
     {
             FD_ZERO(&readfds);
@@ -145,20 +144,11 @@ int remote_shell(void)
                 {
                     while (fgets(psBuffer, sizeof(psBuffer), pPipe))
                     {
-                        size_t len = strlen(output); // longueur actuelle
+                        size_t len = strlen(output);
                         if (len < sizeof(output))
-                        {
-                            snprintf(
-                                output + len,          // écrire à la fin
-                                sizeof(output) - len,  // espace restant
-                                "%s",                  // format littéral
-                                psBuffer
-                            );
-                        }
+                            snprintf(output + len, sizeof(output) - len, "%s", psBuffer);
                         else
-                        {
-                            break; // buffer plein
-                        }
+                            break ;
                     }
 
                 }
