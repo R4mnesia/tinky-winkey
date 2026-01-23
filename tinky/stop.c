@@ -1,19 +1,5 @@
 #include <svc.h>
 
-/*
-    typedef struct _SERVICE_STATUS_PROCESS {
-      DWORD dwServiceType;
-      DWORD dwCurrentState;
-      DWORD dwControlsAccepted;
-      DWORD dwWin32ExitCode;
-      DWORD dwServiceSpecificExitCode;
-      DWORD dwCheckPoint;
-      DWORD dwWaitHint;
-      DWORD dwProcessId;
-      DWORD dwServiceFlags;
-    } SERVICE_STATUS_PROCESS, *LPSERVICE_STATUS_PROCESS;
-*/
-
 void    stop_svc(void)
 {
     KillWinkeyPID();
@@ -47,21 +33,7 @@ void    stop_svc(void)
 
         if (ControlService(hService, SERVICE_CONTROL_STOP, (LPSERVICE_STATUS)&ssp))
         {
-            // waiting service
             printf("Stopping service...\n");
-
-            /*
-            
-                BOOL QueryServiceStatusEx(
-                  [in]            SC_HANDLE      hService,
-                  [in]            SC_STATUS_TYPE InfoLevel,
-                  [out, optional] LPBYTE         lpBuffer,
-                  [in]            DWORD          cbBufSize,
-                  [out]           LPDWORD        pcbBytesNeeded
-                );
-
-            */
-
             while (QueryServiceStatusEx(
                     hService,
                     SC_STATUS_PROCESS_INFO,
