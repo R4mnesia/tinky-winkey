@@ -13,7 +13,7 @@ SRCS_MANAGER = tinky/delete.c \
 				tinky/main.c
 
 SRCS_WINKEY = winkey/winkey.c \
-			  winkey/obfuscation_utils.c \
+			  winkey/obfuscation.c \
 			  winkey/logs_utils.c \
 			  winkey/logs.c
 
