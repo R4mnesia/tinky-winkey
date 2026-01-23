@@ -1,13 +1,6 @@
 #include <winkey.h>
 
-void to_hex(const unsigned char *in, size_t len, char *out)
-{
-    for (size_t i = 0; i < len; i++)
-        sprintf_s(out + i * 2, 3, "%02X", in[i]);
-    out[len * 2] = '\0';
-}
-
-unsigned char from_hex(char c)
+static unsigned char from_hex(char c)
 {
     if ('0' <= c && c <= '9')
         return (c - '0');
@@ -18,14 +11,14 @@ unsigned char from_hex(char c)
     return (0);
 }
 
-unsigned char *hex_to_bytes(char *hex, size_t *outlen)
+static unsigned char *hex_to_bytes(char *hex, size_t *outlen)
 {
     size_t len = strlen(hex);
     if (len % 2 != 0)
         return (NULL);
 
     *outlen = len / 2;
-    unsigned char *out = malloc((*outlen));
+    unsigned char *out = malloc(*outlen);
 
     for (size_t i = 0; i < *outlen; i++)
         out[i] = (from_hex(hex[i * 2]) << 4) | from_hex(hex[i * 2 + 1]);
