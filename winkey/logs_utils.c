@@ -22,7 +22,7 @@ void CreateLogFile(void)
 
     if (LOG_FD == INVALID_HANDLE_VALUE)
     {
-        printf("CreateFile error: %lu\n", GetLastError());
+        DBG("CreateFile error: %lu\n", GetLastError());
         return;
     }
     

@@ -7,7 +7,6 @@ char    *CommandCpy(char *recvbuf)
     char    *cmd = malloc(sizeof(char) * len);
 
     snprintf(cmd, len, "%s\"%s\"", pwshell, recvbuf);
-    printf("cmd: %s\n", cmd);
     return (cmd);
 }
 int  init_socket(SOCKET *ListenSocket)
